@@ -42,12 +42,48 @@
 
 1. 使用最新版 Android Studio 打开本目录。
 2. 等待 Gradle 同步并安装 Android SDK 36。
-3. 使用 Android 9（API 28）或更高版本的设备运行。
+3. **把 Gradle JDK 设为 21**（Settings → Build, Execution, Deployment → Build Tools → Gradle → Gradle JDK）。Gradle 8.11.1 与 AGP 8.9.1 不支持 JDK 25，用默认 JBR 会直接构建失败。
+4. 使用 Android 9（API 28）或更高版本的设备运行。
 
-## 安装包交付约定
+## 代码结构
 
-- 所有对外交付的 APK 统一放在 `bao/` 目录。
-- 文件名必须带 `versionName`，格式为 `man-niu-v<versionName>.apk`。
-- 先执行 `.\gradlew.bat assembleRelease`，再执行 `.\package-apk.ps1`，可将经过代码与资源裁剪的 release APK 按当前 Gradle 版本号复制并命名到 `bao/`。
+`app/src/main/java/com/ranke/health/` 按职责划分：
 
-> 若 Windows 提示无法删除 `app/build`，通常是文件索引或同步软件正在锁定 Gradle 中间文件。可暂停相关程序，或把工程复制到纯英文临时目录后重新构建。
+| 文件 | 职责 |
+| --- | --- |
+| `MainActivity.kt` | Activity 入口与页面导航 |
+| `Theme.kt` | 颜色、尺寸、形状等设计令牌与枚举 |
+| `DashboardScreen.kt` | 首页：K 线、热量卡片、饮食列表 |
+| `TrainingScreen.kt` | 训练计划、动作编辑、个人记录 |
+| `ProfileScreen.kt` | 「我」页面与营养参数配置 |
+| `Dialogs.kt` | 各类弹窗与表单控件 |
+| `CalorieMath.kt` | 热量与宏量营养素计算 |
+| `Models.kt` / `LocalStore.kt` / `AppDatabase.kt` | 数据模型与持久化 |
+
+顶层声明均为 `internal`（同模块可见），新增模块时沿用该约定。
+
+## 安装包发布
+
+APK 体积大，**不进入 Git 仓库**，通过 GitHub Release 分发。
+
+1. `.\gradlew.bat assembleRelease` —— 构建经过 R8 混淆与资源裁剪的 release 包。
+2. `.\package-apk.ps1` —— 按当前 `versionName` 复制并命名为 `bao/man-niu-v<versionName>.apk`。
+3. `.\publish-release.ps1` —— 以 `v<versionName>` 为标签创建 Release 并上传 APK，可重复执行（同名资产会先删除再上传）。
+
+脚本的 GitHub 凭据优先读环境变量 `GITHUB_TOKEN`，否则从 Git 凭据管理器获取（需先用 GitHub Desktop 登录过）。
+
+发布前记得先在 `app/build.gradle.kts` 里递增 `versionCode` 与 `versionName`。
+
+> 若 Windows 提示无法删除 `app/build`，通常是文件索引或同步软件正在锁定 Gradle 中间文件。**请勿把工程放在 OneDrive、坚果云等同步盘的目录里**，会与 Gradle 争抢文件锁，也会让两端修改互相覆盖。
+
+## 多设备同步
+
+仓库即同步源，换设备只需 `git clone`。
+
+```bash
+git pull --rebase     # 动手前先拉
+# 开发……
+git add -A && git commit -m "说明" && git push
+```
+
+每台设备各自维护、**不纳入仓库**的内容：`local.properties`（SDK 路径）、`app/build`、`.gradle`、`bao/*.apk`。首次用 Android Studio 打开工程时会自动生成 `local.properties`。

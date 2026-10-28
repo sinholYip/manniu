@@ -34,13 +34,17 @@ if (-not (Test-Path -LiteralPath $apkPath -PathType Leaf)) {
 $assetName = Split-Path -Leaf $apkPath
 $apkSizeMb = [math]::Round((Get-Item -LiteralPath $apkPath).Length / 1MB, 1)
 
-# ---------- 3. 解析 owner / repo ----------
-Push-Location $projectDir
-try {
-    $remoteUrl = (git remote get-url origin).Trim()
-} finally {
-    Pop-Location
+# ---------- 3. 解析 owner / repo（直接读 .git/config，不依赖 PATH 中的 git） ----------
+$gitConfigPath = Join-Path $projectDir '.git\config'
+if (-not (Test-Path -LiteralPath $gitConfigPath -PathType Leaf)) {
+    throw "找不到 $gitConfigPath，请确认当前目录是 Git 仓库"
 }
+$gitConfigText = Get-Content -LiteralPath $gitConfigPath -Raw
+$urlMatch = [regex]::Match($gitConfigText, 'url\s*=\s*(\S+)')
+if (-not $urlMatch.Success) {
+    throw "在 .git/config 中找不到 remote url，请先执行：git remote add origin <仓库地址>"
+}
+$remoteUrl = $urlMatch.Groups[1].Value.Trim()
 $repoMatch = [regex]::Match($remoteUrl, 'github\.com[:/](?<owner>[^/]+)/(?<repo>[^/.]+)')
 if (-not $repoMatch.Success) {
     throw "无法从 origin 解析 GitHub 仓库地址：$remoteUrl"
@@ -49,9 +53,29 @@ $owner = $repoMatch.Groups['owner'].Value
 $repo = $repoMatch.Groups['repo'].Value
 
 # ---------- 4. 获取 Token ----------
+function Get-GitExe {
+    $cmd = Get-Command git -ErrorAction SilentlyContinue
+    if ($null -ne $cmd) { return $cmd.Source }
+
+    $candidates = @('C:\Program Files\Git\cmd\git.exe', 'C:\Program Files (x86)\Git\cmd\git.exe')
+    $desktop = Get-ChildItem (Join-Path $env:LOCALAPPDATA 'GitHubDesktop') -Filter 'app-*' -Directory -ErrorAction SilentlyContinue |
+        Sort-Object Name -Descending | Select-Object -First 1
+    if ($null -ne $desktop) {
+        $candidates += (Join-Path $desktop.FullName 'resources\app\git\cmd\git.exe')
+    }
+    foreach ($c in $candidates) {
+        if (Test-Path -LiteralPath $c -PathType Leaf) { return $c }
+    }
+    return $null
+}
+
 $token = $env:GITHUB_TOKEN
 if ([string]::IsNullOrWhiteSpace($token)) {
-    $cred = "protocol=https`nhost=github.com`n`n" | git credential fill 2>$null
+    $gitExe = Get-GitExe
+    if ($null -eq $gitExe) {
+        throw "未找到 git，也无法读取凭据。请设置环境变量 GITHUB_TOKEN 后重试"
+    }
+    $cred = "protocol=https`nhost=github.com`n`n" | & $gitExe credential fill 2>$null
     foreach ($line in $cred) {
         if ($line -like 'password=*') {
             $token = $line.Substring('password='.Length)
@@ -89,8 +113,10 @@ try {
         draft      = $false
         prerelease = $false
     } | ConvertTo-Json
+    # PowerShell 5.1 发送字符串请求体时按 ANSI 编码，中文会变成问号，必须显式转 UTF-8 字节
+    $bodyBytes = [System.Text.Encoding]::UTF8.GetBytes($payload)
     $release = Invoke-RestMethod -Uri "$apiBase/releases" -Headers $headers -Method Post `
-        -Body $payload -ContentType 'application/json'
+        -Body $bodyBytes -ContentType 'application/json; charset=utf-8'
 }
 
 # ---------- 6. 清理同名旧资产 ----------
