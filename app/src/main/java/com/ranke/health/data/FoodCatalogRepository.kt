@@ -1,12 +1,14 @@
-package com.ranke.health
+package com.ranke.health.data
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import org.json.JSONObject
+import com.ranke.health.model.FoodReference
+import com.ranke.health.model.caloriesFromMacros
 import java.net.HttpURLConnection
 import java.net.URI
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.json.JSONObject
 
 class FoodCatalogRepository {
     fun quickFoods(): List<FoodReference> = defaultQuickFoods

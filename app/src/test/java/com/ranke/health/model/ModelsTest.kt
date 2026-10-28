@@ -1,4 +1,4 @@
-package com.ranke.health
+package com.ranke.health.model
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -8,6 +8,7 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.DayOfWeek
 import java.time.LocalDate
+import com.ranke.health.data.FoodCatalogRepository
 
 class ModelsTest {
     @Test

@@ -1,4 +1,4 @@
-package com.ranke.health
+package com.ranke.health.data
 
 import android.content.Context
 import androidx.room.Dao

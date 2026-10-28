@@ -1,4 +1,4 @@
-package com.ranke.health
+package com.ranke.health.data
 
 import android.content.Context
 import androidx.compose.foundation.layout.Box
@@ -37,6 +37,11 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.time.LocalDate
+import com.ranke.health.model.WorkoutDay
+import com.ranke.health.model.DayMode
+import com.ranke.health.model.WorkoutExercise
+import com.ranke.health.model.MealPeriod
+import com.ranke.health.ui.screen.WorkoutExerciseRowContent
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])

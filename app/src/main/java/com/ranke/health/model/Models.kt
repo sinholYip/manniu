@@ -1,8 +1,8 @@
-package com.ranke.health
+package com.ranke.health.model
 
+import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
-import java.time.DayOfWeek
 import java.time.ZoneId
 
 data class WeightEntry(val time: Instant, val kilograms: Double, val source: String)

@@ -1,11 +1,29 @@
-package com.ranke.health
+package com.ranke.health.data
 
 import android.content.Context
+import com.ranke.health.model.BiologicalSex
+import com.ranke.health.model.CaloriePlan
+import com.ranke.health.model.DayMode
+import com.ranke.health.model.ExercisePr
+import com.ranke.health.model.FoodReference
+import com.ranke.health.model.HealthProfile
+import com.ranke.health.model.MealEntry
+import com.ranke.health.model.MealMacroShare
+import com.ranke.health.model.MealPeriod
+import com.ranke.health.model.TrainingSettings
+import com.ranke.health.model.WeightEntry
+import com.ranke.health.model.WorkoutDay
+import com.ranke.health.model.WorkoutExercise
+import com.ranke.health.model.caloriesFromMacros
+import com.ranke.health.model.defaultMealMacroShares
+import com.ranke.health.model.defaultTrainingMealMacroShares
+import com.ranke.health.model.defaultWorkoutWeek
+import com.ranke.health.model.inferMealPeriod
+import java.time.DayOfWeek
+import java.time.Instant
+import java.time.LocalDate
 import org.json.JSONArray
 import org.json.JSONObject
-import java.time.Instant
-import java.time.DayOfWeek
-import java.time.LocalDate
 
 class LocalStore(context: Context) {
     private val prefs = context.getSharedPreferences("ranke_records", Context.MODE_PRIVATE)
