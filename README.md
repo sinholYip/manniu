@@ -11,7 +11,14 @@
 就是它的成交量。红涨绿跌的配色沿用 A 股习惯 —— 增重记红，减重记绿。
 界面全深色，主色为荧光绿，无网络也能完整使用。
 
-界面设计稿与交互清单见 [`design/`](design/) 目录。
+## 界面
+
+| 饮食计划 | 训练计划 | 我的 |
+| :---: | :---: | :---: |
+| <img src="docs/screenshots/01-dashboard.jpg" width="250" alt="饮食计划" /> | <img src="docs/screenshots/02-training.jpg" width="250" alt="训练计划" /> | <img src="docs/screenshots/03-profile.jpg" width="250" alt="我的" /> |
+| 今日摄入进度、体重 K 线与热量柱状图 | 按日期编排训练、周期与部位背景 | 身体数据、BMI 与训练日参考热量 |
+
+更多设计稿与交互清单见 [`design/`](design/) 目录。
 
 ## 功能
 
@@ -140,5 +147,5 @@ git add -A && git commit -m "说明" && git push
 - 唯一义务：在副本或实质部分中保留版权声明与本许可声明。
 - 本软件按"现状"提供，不含任何担保，作者不对使用后果承担责任。
 
-> `design/` 下的界面概念图，以及 `app/src/main/res/` 中的图标与训练背景图属于个人视觉素材，
-> 二次分发时建议替换为自己的素材或注明来源。
+> `design/` 下的界面概念图、`docs/screenshots/` 中的应用截图，以及 `app/src/main/res/`
+> 中的图标与训练背景图属于个人视觉素材，二次分发时建议替换为自己的素材或注明来源。
