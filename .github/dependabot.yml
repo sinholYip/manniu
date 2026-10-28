@@ -26,6 +26,21 @@ updates:
           - "junit*"
           - "org.robolectric*"
           - "androidx.test*"
+    # 构建工具链的大版本升级需要人工迁移（AGP 9 起需要改造 gradle 配置与
+    # compose 编译器接入方式），自动 PR 必然构建失败，因此只允许小版本与补丁。
+    ignore:
+      - dependency-name: "com.android.application"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "org.jetbrains.kotlin.android"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "org.jetbrains.kotlin.plugin.compose"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "com.google.devtools.ksp"
+        update-types:
+          - "version-update:semver-major"
 
   - package-ecosystem: github-actions
     directory: "/"
