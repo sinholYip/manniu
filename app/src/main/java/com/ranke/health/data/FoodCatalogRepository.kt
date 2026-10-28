@@ -2,6 +2,7 @@ package com.ranke.health.data
 
 import com.ranke.health.model.FoodReference
 import com.ranke.health.model.caloriesFromMacros
+import com.ranke.health.model.foodDisplayName
 import java.net.HttpURLConnection
 import java.net.URI
 import java.net.URLEncoder
@@ -13,21 +14,25 @@ import org.json.JSONObject
 class FoodCatalogRepository {
     fun quickFoods(): List<FoodReference> = defaultQuickFoods
 
-    internal fun searchLocalFoods(query: String): List<FoodReference> {
+    // english = true 时额外用英文显示名匹配，中文名始终可搜，保证两种界面下都能命中本地参考值。
+    internal fun searchLocalFoods(query: String, english: Boolean = false): List<FoodReference> {
         val normalized = query.trim()
         if (normalized.isEmpty()) return emptyList()
-        return searchableFoods.filter { it.name.contains(normalized, ignoreCase = true) }
+        return searchableFoods.filter {
+            it.name.contains(normalized, ignoreCase = true) ||
+                (english && foodDisplayName(it.name, true).contains(normalized, ignoreCase = true))
+        }
     }
 
-    suspend fun search(query: String): List<FoodReference> = withContext(Dispatchers.IO) {
+    suspend fun search(query: String, english: Boolean = false): List<FoodReference> = withContext(Dispatchers.IO) {
         val normalized = query.trim()
         if (normalized.isEmpty()) return@withContext emptyList()
-        val local = searchLocalFoods(normalized)
-        val online = runCatching { searchOpenFoodFacts(normalized) }.getOrDefault(emptyList())
+        val local = searchLocalFoods(normalized, english)
+        val online = runCatching { searchOpenFoodFacts(normalized, english) }.getOrDefault(emptyList())
         (local + online).distinctBy { it.name.lowercase() }.take(30)
     }
 
-    private fun searchOpenFoodFacts(query: String): List<FoodReference> {
+    private fun searchOpenFoodFacts(query: String, english: Boolean): List<FoodReference> {
         val encoded = URLEncoder.encode(query, StandardCharsets.UTF_8.toString())
         val url = URI(
             "https://world.openfoodfacts.org/cgi/search.pl" +
@@ -50,7 +55,8 @@ class FoodCatalogRepository {
                     val product = products.optJSONObject(index) ?: continue
                     val nutrients = product.optJSONObject("nutriments") ?: continue
                     val localizedName = product.optString("product_name_zh")
-                    val name = if (localizedName.isNotBlank()) localizedName else product.optString("product_name")
+                    val primaryName = product.optString("product_name")
+                    val name = if (english) primaryName.ifBlank { localizedName } else localizedName.ifBlank { primaryName }
                     if (name.isBlank()) continue
                     val carbs = nutrients.optDouble("carbohydrates_100g", Double.NaN)
                     val protein = nutrients.optDouble("proteins_100g", Double.NaN)

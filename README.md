@@ -1,5 +1,7 @@
 # man牛
 
+[English](README.en.md) | **简体中文**
+
 [![Android CI](https://github.com/sinholYip/manniu/actions/workflows/android-ci.yml/badge.svg)](https://github.com/sinholYip/manniu/actions/workflows/android-ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![minSdk 28](https://img.shields.io/badge/minSdk-28-3DDC84.svg)](https://developer.android.com/about/versions/pie)
@@ -49,6 +51,12 @@
 - 一键导出完整历史为 JSON，换机或重装后恢复并合并
 - 恢复前完整校验，损坏文件不写入任何数据；重复恢复不会重复计入
 - 与微信小程序版共用同一份备份格式
+
+**语言**
+
+- 简体中文 / English 双语，在「我」页面最底部切换，默认跟随系统
+- 切换语言不改动已有数据：动作名与食物名仍以中文规范名存储，备份可跨语言恢复
+- 长文案不会撑变形控件，单元格放不下时先缩字号、极端情况才省略
 
 ## 快速开始
 

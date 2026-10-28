@@ -59,15 +59,18 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
 import androidx.compose.ui.zIndex
+import com.ranke.health.R
 import com.ranke.health.core.formatNutrition
 import com.ranke.health.core.rebalanceMealMacro
 import com.ranke.health.core.scaleMealMacro
@@ -79,9 +82,16 @@ import com.ranke.health.model.MealEntry
 import com.ranke.health.model.MealMacroShare
 import com.ranke.health.model.MealPeriod
 import com.ranke.health.model.caloriesFromMacros
+import com.ranke.health.model.canonicalFoodName
 import com.ranke.health.model.defaultMealMacroShares
 import com.ranke.health.model.defaultTrainingMealMacroShares
+import com.ranke.health.model.foodDisplayName
 import com.ranke.health.model.inferMealPeriod
+import com.ranke.health.model.sourceDisplayName
+import com.ranke.health.ui.i18n.LocalAppLocale
+import com.ranke.health.ui.i18n.isEnglishUi
+import com.ranke.health.ui.i18n.label
+import com.ranke.health.ui.i18n.shortName
 import com.ranke.health.ui.theme.Accent
 import com.ranke.health.ui.theme.AppControlShape
 import com.ranke.health.ui.theme.AppModalBlurRadius
@@ -111,6 +121,7 @@ internal fun AppModalSheet(
 ) {
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         val dialogView = LocalView.current
+        val closeLabel = stringResource(R.string.action_close)
         val blurRadiusPx = with(LocalDensity.current) { AppModalBlurRadius.roundToPx() }
         DisposableEffect(dialogView, blurRadiusPx) {
             val window = (dialogView.parent as? DialogWindowProvider)?.window
@@ -141,14 +152,15 @@ internal fun AppModalSheet(
                 Column(Modifier.fillMaxWidth()) {
                     Row(Modifier.fillMaxWidth().padding(20.dp, 16.dp, 12.dp, 10.dp), verticalAlignment = Alignment.Top) {
                         Column(Modifier.weight(1f)) {
-                            Text(title, color = Ink, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                            // 英文标题更长，允许折行，容器宽度不变。
+                            Text(title, color = Ink, fontSize = 24.sp, fontWeight = FontWeight.Bold, maxLines = 2)
                             subtitle?.let {
                                 Spacer(Modifier.height(4.dp))
-                                Text(it, color = Muted, fontSize = 12.sp)
+                                Text(it, color = Muted, fontSize = 12.sp, maxLines = 2)
                             }
                         }
                         Box(Modifier.size(38.dp).background(Raised, CircleShape).clickable(onClick = onDismiss), contentAlignment = Alignment.Center) {
-                            Icon(Icons.Rounded.Close, "关闭", tint = Muted, modifier = Modifier.size(19.dp))
+                            Icon(Icons.Rounded.Close, closeLabel, tint = Muted, modifier = Modifier.size(19.dp))
                         }
                     }
                     Column(
@@ -171,7 +183,7 @@ internal fun PrimaryModalButton(label: String, enabled: Boolean, onClick: () -> 
         modifier = Modifier.fillMaxWidth().height(52.dp),
         colors = ButtonDefaults.buttonColors(containerColor = Lime, contentColor = Background),
         shape = AppControlShape
-    ) { Text(label, fontSize = 15.sp, fontWeight = FontWeight.Bold) }
+    ) { FitText(label, maxFontSize = 15.sp, minFontSize = 11.sp, color = Background, fontWeight = FontWeight.Bold) }
 }
 
 @Composable
@@ -257,26 +269,34 @@ internal fun CaloriePlanDialog(plan: CaloriePlan, onDismiss: () -> Unit, onSave:
     } else plan.trainingMealMacroShares
 
     AppModalSheet(
-        title = "每日营养计划",
-        subtitle = "训练日与休息日独立设置",
+        title = stringResource(R.string.plan_title),
+        subtitle = stringResource(R.string.plan_sub),
         onDismiss = onDismiss,
         content = {
             Row(
                 Modifier.fillMaxWidth().background(Raised, AppControlShape)
                     .border(1.dp, Outline, AppControlShape).padding(4.dp)
             ) {
-                listOf("每日目标", "餐次分配").forEachIndexed { index, label ->
+                listOf(stringResource(R.string.plan_tab_targets), stringResource(R.string.plan_tab_split)).forEachIndexed { index, label ->
                     Box(
                         Modifier.weight(1f).background(if (page == index) Lime else Color.Transparent, AppControlShape)
                             .clickable { page = index }.padding(vertical = 10.dp),
                         contentAlignment = Alignment.Center
-                    ) { Text(label, color = if (page == index) Background else Muted, fontSize = 13.sp, fontWeight = FontWeight.SemiBold) }
+                    ) {
+                        FitText(
+                            text = label,
+                            maxFontSize = 13.sp,
+                            minFontSize = 10.sp,
+                            color = if (page == index) Background else Muted,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
                 }
             }
             if (page == 0) {
-                Text("输入碳蛋脂目标，热量会自动计算。", color = Muted, fontSize = 11.sp)
+                Text(stringResource(R.string.plan_targets_hint), color = Muted, fontSize = 11.sp)
                 MacroPlanEditor(
-                    title = "训练日", calories = trainingCalories,
+                    title = stringResource(R.string.day_training), calories = trainingCalories,
                     carbs = trainingCarbs, onCarbsChange = {
                         trainingCarbs = it
                         trainingLockedMacros = trainingLockedMacros - 0
@@ -294,7 +314,7 @@ internal fun CaloriePlanDialog(plan: CaloriePlan, onDismiss: () -> Unit, onSave:
                     }
                 )
                 MacroPlanEditor(
-                    title = "休息日", calories = restCalories,
+                    title = stringResource(R.string.day_rest), calories = restCalories,
                     carbs = restCarbs, onCarbsChange = {
                         restCarbs = it
                         restLockedMacros = restLockedMacros - 0
@@ -311,7 +331,7 @@ internal fun CaloriePlanDialog(plan: CaloriePlan, onDismiss: () -> Unit, onSave:
                         it.toDoubleOrNull()?.let { target -> restMealShares = scaleMealMacro(restMealShares, 2, target, restPeriods) }
                     }
                 )
-                Text("选择每周训练日", color = Ink, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.plan_pick_days), color = Ink, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     DayOfWeek.entries.forEach { day ->
                         WeekdayChip(
@@ -323,8 +343,8 @@ internal fun CaloriePlanDialog(plan: CaloriePlan, onDismiss: () -> Unit, onSave:
                     }
                 }
             } else {
-                Text("已手动填写的餐次会锁定，剩余克数继续向后分配。", color = Muted, fontSize = 11.sp)
-                Text("训练日 · 含练前餐", color = Lime, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.plan_split_hint), color = Muted, fontSize = 11.sp)
+                Text(stringResource(R.string.plan_training_day_pre), color = Lime, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                 trainingPeriods.forEach { period ->
                     val values = trainingMealShares.getValue(period)
                     MealDistributionEditor(
@@ -341,8 +361,8 @@ internal fun CaloriePlanDialog(plan: CaloriePlan, onDismiss: () -> Unit, onSave:
                         }
                     )
                 }
-                if (!trainingSharesValid) Text("训练日分配需为有效克数并保持自动平衡", color = UpRed, fontSize = 10.sp)
-                Text("休息日 · 无练前餐", color = Ink, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                if (!trainingSharesValid) Text(stringResource(R.string.plan_training_split_invalid), color = UpRed, fontSize = 10.sp)
+                Text(stringResource(R.string.plan_rest_day_no_pre), color = Ink, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                 restPeriods.forEach { period ->
                     val values = restMealShares.getValue(period)
                     MealDistributionEditor(
@@ -359,11 +379,11 @@ internal fun CaloriePlanDialog(plan: CaloriePlan, onDismiss: () -> Unit, onSave:
                         }
                     )
                 }
-                if (!restSharesValid) Text("休息日分配需为有效克数并保持自动平衡", color = UpRed, fontSize = 10.sp)
+                if (!restSharesValid) Text(stringResource(R.string.plan_rest_split_invalid), color = UpRed, fontSize = 10.sp)
             }
         },
         footer = {
-            PrimaryModalButton("保存计划", valuesValid && sharesValid) {
+            PrimaryModalButton(stringResource(R.string.plan_save), valuesValid && sharesValid) {
                     if (valuesValid && sharesValid) onSave(CaloriePlan(
                         trainingCarbsGrams = trainingValues[0]!!,
                         trainingProteinGrams = trainingValues[1]!!,
@@ -389,11 +409,11 @@ internal fun MealDistributionEditor(
 ) {
     Card(colors = CardDefaults.cardColors(containerColor = Raised), shape = AppControlShape, border = BorderStroke(1.dp, CardOutline)) {
         Column(Modifier.padding(11.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
-            Text(period.label, color = Ink, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            Text(period.label(), color = Ink, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                MealGramField("碳水", values.first, { onChange(0, it) }, Modifier.weight(1f))
-                MealGramField("蛋白", values.second, { onChange(1, it) }, Modifier.weight(1f))
-                MealGramField("脂肪", values.third, { onChange(2, it) }, Modifier.weight(1f))
+                MealGramField(stringResource(R.string.macro_carbs), values.first, { onChange(0, it) }, Modifier.weight(1f))
+                MealGramField(stringResource(R.string.macro_protein_short), values.second, { onChange(1, it) }, Modifier.weight(1f))
+                MealGramField(stringResource(R.string.macro_fat), values.third, { onChange(2, it) }, Modifier.weight(1f))
             }
         }
     }
@@ -404,7 +424,7 @@ internal fun MealGramField(label: String, value: String, onChange: (String) -> U
     OutlinedTextField(
         value = value,
         onValueChange = onChange,
-        label = { Text(label, fontSize = 10.sp) },
+        label = { Text(label, fontSize = 10.sp, maxLines = 1) },
         suffix = { Text("g", fontSize = 10.sp) },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
         singleLine = true,
@@ -426,15 +446,15 @@ internal fun MacroPlanEditor(
     Card(colors = CardDefaults.cardColors(containerColor = Raised), shape = AppControlShape, border = BorderStroke(1.dp, CardOutline)) {
         Column(Modifier.padding(13.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(title, color = Ink, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                Text("%.0f kcal".format(calories), color = Lime, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                Text(title, color = Ink, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f), maxLines = 1)
+                Text("%.0f kcal".format(calories), color = Lime, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1)
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                MacroTargetField("碳水", carbs, onCarbsChange, Modifier.weight(1f))
-                MacroTargetField("蛋白", protein, onProteinChange, Modifier.weight(1f))
-                MacroTargetField("脂肪", fat, onFatChange, Modifier.weight(1f))
+                MacroTargetField(stringResource(R.string.macro_carbs), carbs, onCarbsChange, Modifier.weight(1f))
+                MacroTargetField(stringResource(R.string.macro_protein_short), protein, onProteinChange, Modifier.weight(1f))
+                MacroTargetField(stringResource(R.string.macro_fat), fat, onFatChange, Modifier.weight(1f))
             }
-            Text("碳水×4 + 蛋白质×4 + 脂肪×9", color = Muted, fontSize = 10.sp)
+            Text(stringResource(R.string.macro_formula), color = Muted, fontSize = 10.sp, maxLines = 1)
         }
     }
 }
@@ -444,22 +464,12 @@ internal fun MacroTargetField(label: String, value: String, onChange: (String) -
     OutlinedTextField(
         value = value,
         onValueChange = onChange,
-        label = { Text(label, fontSize = 11.sp) },
+        label = { Text(label, fontSize = 11.sp, maxLines = 1) },
         suffix = { Text("g", fontSize = 10.sp) },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
         singleLine = true,
         modifier = modifier
     )
-}
-
-internal fun DayOfWeek.shortChinese(): String = when (this) {
-    DayOfWeek.MONDAY -> "周一"
-    DayOfWeek.TUESDAY -> "周二"
-    DayOfWeek.WEDNESDAY -> "周三"
-    DayOfWeek.THURSDAY -> "周四"
-    DayOfWeek.FRIDAY -> "周五"
-    DayOfWeek.SATURDAY -> "周六"
-    DayOfWeek.SUNDAY -> "周日"
 }
 
 @Composable
@@ -470,6 +480,8 @@ internal fun WeekdayChip(
     modifier: Modifier = Modifier
 ) {
     val shape = RoundedCornerShape(18.dp)
+    val locale = LocalAppLocale.current
+    val label = remember(day, locale) { day.shortName(locale) }
     Box(
         modifier = modifier
             .height(36.dp)
@@ -479,12 +491,14 @@ internal fun WeekdayChip(
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = day.shortChinese(),
+        // 单元格仅约 43dp 宽，英文三字母缩写刚好容纳，超长时自动缩小而不是溢出。
+        FitText(
+            text = label,
+            maxFontSize = 10.sp,
+            minFontSize = 7.sp,
             color = if (selected) Background else Ink,
-            fontSize = 10.sp,
             fontWeight = FontWeight.SemiBold,
-            maxLines = 1
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center
         )
     }
 }
@@ -503,7 +517,8 @@ internal fun MealDialog(
     onReorderQuickFoods: (List<String>) -> Unit,
     onSave: (String, Double, MealPeriod, Double, Double, Double) -> Unit
 ) {
-    var name by remember(initialMeal) { mutableStateOf(initialMeal?.name.orEmpty()) }
+    val english = isEnglishUi()
+    var name by remember(initialMeal) { mutableStateOf(initialMeal?.let { foodDisplayName(it.name, english) }.orEmpty()) }
     var carbs by remember(initialMeal) { mutableStateOf(initialMeal?.let { formatNutrition(it.carbohydratesGrams) }.orEmpty()) }
     var protein by remember(initialMeal) { mutableStateOf(initialMeal?.let { formatNutrition(it.proteinGrams) }.orEmpty()) }
     var fat by remember(initialMeal) { mutableStateOf(initialMeal?.let { formatNutrition(it.fatGrams) }.orEmpty()) }
@@ -526,6 +541,10 @@ internal fun MealDialog(
     var presetMessage by remember { mutableStateOf<String?>(null) }
     val catalog = remember { FoodCatalogRepository() }
     val scope = rememberCoroutineScope()
+    // 协程与 onClick 都不是 Composable 上下文，带占位符的文案先取好再进回调。
+    val foundTemplate = stringResource(R.string.meal_search_found)
+    val noneFoundText = stringResource(R.string.meal_search_none)
+    val presetSavedText = stringResource(R.string.meal_preset_saved)
     val parsedCarbs = carbs.toDoubleOrNull() ?: 0.0
     val parsedProtein = protein.toDoubleOrNull() ?: 0.0
     val parsedFat = fat.toDoubleOrNull() ?: 0.0
@@ -543,7 +562,7 @@ internal fun MealDialog(
     fun applyFood(food: FoodReference, grams: Double = portion.toDoubleOrNull() ?: 100.0) {
         val factor = grams.coerceAtLeast(0.0) / 100.0
         selectedFood = food
-        name = food.name
+        name = foodDisplayName(food.name, english)
         carbs = formatNutrition(food.carbohydratesPer100g * factor)
         protein = formatNutrition(food.proteinPer100g * factor)
         fat = formatNutrition(food.fatPer100g * factor)
@@ -554,18 +573,18 @@ internal fun MealDialog(
         scope.launch {
             searching = true
             searchMessage = null
-            results = catalog.search(query.trim())
+            results = catalog.search(query.trim(), english)
             searching = false
-            searchMessage = if (results.isEmpty()) "没有找到，也可以直接在下方手动填写" else "找到 ${results.size} 个结果"
+            searchMessage = if (results.isEmpty()) noneFoundText else foundTemplate.format(results.size)
         }
     }
 
     AppModalSheet(
-        title = if (initialMeal == null) "记录饮食" else "修改饮食",
-        subtitle = if (initialMeal == null) "选食物、调份量，热量会自动计算" else "修改后热量与营养汇总会同步更新",
+        title = stringResource(if (initialMeal == null) R.string.meal_dialog_add else R.string.meal_dialog_edit),
+        subtitle = stringResource(if (initialMeal == null) R.string.meal_dialog_add_sub else R.string.meal_dialog_edit_sub),
         onDismiss = onDismiss,
         content = {
-                MealSectionTitle("用餐时段", "已根据当前时间自动选择")
+                MealSectionTitle(stringResource(R.string.meal_section_period), stringResource(R.string.meal_section_period_sub))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(5.dp)) {
                     selectablePeriods.forEach { option ->
                         val selected = period == option
@@ -573,21 +592,24 @@ internal fun MealDialog(
                             modifier = Modifier.weight(1f).height(38.dp)
                                 .background(if (selected) Lime else Raised, AppControlShape)
                                 .border(1.dp, if (selected) Lime else Outline, AppControlShape)
-                                .clickable { period = option },
+                                .clickable { period = option }
+                                .padding(horizontal = 2.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                option.label,
+                            // 五等分后每格约 60dp："Pre-workout" 靠缩小字号放进同一格，不改变分段控件尺寸。
+                            FitText(
+                                text = option.label(),
+                                maxFontSize = 11.sp,
+                                minFontSize = 8.sp,
                                 color = if (selected) Background else Ink,
-                                fontSize = 11.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                maxLines = 1
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
                             )
                         }
                     }
                 }
 
-                MealSectionTitle("快速选择", "自定义与常用食物")
+                MealSectionTitle(stringResource(R.string.meal_section_quick), stringResource(R.string.meal_section_quick_sub))
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(quickFoods, key = { it.name.lowercase() }) { food ->
                         FoodPresetCard(
@@ -595,6 +617,8 @@ internal fun MealDialog(
                                 placementSpec = spring(dampingRatio = 0.78f, stiffness = 460f)
                             ),
                             food = food,
+                            displayName = foodDisplayName(food.name, english),
+                            sourceLabel = sourceDisplayName(food.source, english),
                             selected = selectedFood?.name == food.name,
                             onClick = { applyFood(food) },
                             onRemove = { onHideQuickFood(food.name) },
@@ -610,7 +634,7 @@ internal fun MealDialog(
                     }
                 }
 
-                MealSectionTitle("搜索食物", "同时搜索本地参考值与 Open Food Facts")
+                MealSectionTitle(stringResource(R.string.meal_section_search), stringResource(R.string.meal_section_search_sub))
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(
                         value = query,
@@ -618,7 +642,7 @@ internal fun MealDialog(
                             query = it
                             searchMessage = null
                         },
-                        placeholder = { Text("例如：米饭、牛奶") },
+                        placeholder = { Text(stringResource(R.string.meal_search_hint), maxLines = 1) },
                         singleLine = true,
                         modifier = Modifier.weight(1f),
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
@@ -630,15 +654,25 @@ internal fun MealDialog(
                         contentPadding = androidx.compose.foundation.layout.PaddingValues(13.dp)
                     ) {
                         if (searching) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = Color.White)
-                        else Icon(Icons.Rounded.Search, "搜索", modifier = Modifier.size(19.dp))
+                        else Icon(Icons.Rounded.Search, stringResource(R.string.action_search), modifier = Modifier.size(19.dp))
                     }
                 }
                 searchMessage?.let { Text(it, color = if (results.isEmpty()) Muted else Lime, fontSize = 11.sp) }
                 results.take(5).forEach { food ->
-                    FoodPresetRow(food = food, selected = selectedFood?.name == food.name, onClick = { applyFood(food) })
+                    FoodPresetRow(
+                        food = food,
+                        displayName = foodDisplayName(food.name, english),
+                        sourceLabel = sourceDisplayName(food.source, english),
+                        selected = selectedFood?.name == food.name,
+                        onClick = { applyFood(food) }
+                    )
                 }
 
-                MealSectionTitle("份量与营养", selectedFood?.let { "已选 ${it.name}，改份量会自动换算" } ?: "也可以直接手动录入")
+                MealSectionTitle(
+                    stringResource(R.string.meal_section_portion),
+                    selectedFood?.let { stringResource(R.string.meal_portion_selected).format(foodDisplayName(it.name, english)) }
+                        ?: stringResource(R.string.meal_portion_manual)
+                )
                 OutlinedTextField(
                     portion,
                     {
@@ -647,7 +681,7 @@ internal fun MealDialog(
                         val food = selectedFood
                         if (grams != null && food != null) applyFood(food, grams)
                     },
-                    label = { Text("实际食用量（克）") },
+                    label = { Text(stringResource(R.string.meal_portion_label), maxLines = 1) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     suffix = { Text("g") },
                     singleLine = true,
@@ -661,7 +695,7 @@ internal fun MealDialog(
                                 portion = grams.toString()
                                 selectedFood?.let { applyFood(it, grams.toDouble()) }
                             },
-                            label = { Text("${grams}g", fontSize = 11.sp) },
+                            label = { Text("${grams}g", fontSize = 11.sp, maxLines = 1) },
                             modifier = Modifier.weight(1f)
                         )
                     }
@@ -669,22 +703,23 @@ internal fun MealDialog(
                 OutlinedTextField(
                     name,
                     { name = it; selectedFood = null },
-                    label = { Text("食物名称") },
+                    label = { Text(stringResource(R.string.meal_food_name), maxLines = 1) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    NutritionField("碳水 (g)", carbs, { carbs = it; selectedFood = null }, Modifier.weight(1f))
-                    NutritionField("蛋白质 (g)", protein, { protein = it; selectedFood = null }, Modifier.weight(1f))
+                    NutritionField(stringResource(R.string.meal_carb_g), carbs, { carbs = it; selectedFood = null }, Modifier.weight(1f))
+                    NutritionField(stringResource(R.string.meal_protein_g), protein, { protein = it; selectedFood = null }, Modifier.weight(1f))
                 }
-                NutritionField("脂肪 (g)", fat, { fat = it; selectedFood = null }, Modifier.fillMaxWidth())
+                NutritionField(stringResource(R.string.meal_fat_g), fat, { fat = it; selectedFood = null }, Modifier.fillMaxWidth())
                 Card(colors = CardDefaults.cardColors(containerColor = Raised), shape = AppControlShape, border = BorderStroke(1.dp, CardOutline)) {
                     Row(Modifier.fillMaxWidth().padding(13.dp), verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
-                            Text("自动计算热量", color = Muted, fontSize = 11.sp)
-                            Text("碳水×4 + 蛋白质×4 + 脂肪×9", color = Muted, fontSize = 10.sp)
+                            Text(stringResource(R.string.meal_auto_kcal), color = Muted, fontSize = 11.sp, maxLines = 1)
+                            Text(stringResource(R.string.macro_formula), color = Muted, fontSize = 10.sp, maxLines = 1)
                         }
-                        Text("%.0f kcal".format(calculatedCalories), color = Lime, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                        Spacer(Modifier.width(8.dp))
+                        Text("%.0f kcal".format(calculatedCalories), color = Lime, fontSize = 18.sp, fontWeight = FontWeight.Bold, maxLines = 1)
                     }
                 }
                 TextButton(
@@ -693,29 +728,28 @@ internal fun MealDialog(
                         val factor = grams / 100.0
                         if (factor <= 0.0) return@TextButton
                         onSavePreset(FoodReference(
-                            name = name.trim(),
+                            name = canonicalFoodName(name, english),
                             kilocaloriesPer100g = caloriesFromMacros(parsedCarbs / factor, parsedProtein / factor, parsedFat / factor),
                             carbohydratesPer100g = parsedCarbs / factor,
                             proteinPer100g = parsedProtein / factor,
                             fatPer100g = parsedFat / factor,
                             source = "自定义预设"
                         ))
-                        presetMessage = "已保存为每 100 克食物预设"
+                        presetMessage = presetSavedText
                     },
                     enabled = name.isNotBlank() && (portion.toDoubleOrNull() ?: 0.0) > 0.0 && calculatedCalories > 0.0,
                     modifier = Modifier.fillMaxWidth().background(Raised, AppControlShape)
                         .border(1.dp, Outline, AppControlShape),
                     colors = ButtonDefaults.textButtonColors(contentColor = Ink)
-                ) { Text("保存为常用食物", fontWeight = FontWeight.SemiBold) }
+                ) { Text(stringResource(R.string.meal_save_preset), fontWeight = FontWeight.SemiBold, maxLines = 1) }
                 presetMessage?.let { Text(it, color = Lime, fontSize = 11.sp) }
         },
         footer = {
-            PrimaryModalButton(
-                (if (initialMeal == null) "记录" else "保存修改") + " %.0f kcal".format(calculatedCalories),
-                name.isNotBlank() && calculatedCalories > 0.0
-            ) {
+            val saveLabel = stringResource(if (initialMeal == null) R.string.meal_save_new else R.string.meal_save_edit)
+                .format(calculatedCalories)
+            PrimaryModalButton(saveLabel, name.isNotBlank() && calculatedCalories > 0.0) {
                     if (calculatedCalories > 0.0) onSave(
-                        name.trim(), calculatedCalories, period,
+                        canonicalFoodName(name, english), calculatedCalories, period,
                         parsedCarbs, parsedProtein, parsedFat
                     )
             }
@@ -735,6 +769,8 @@ internal fun MealSectionTitle(title: String, subtitle: String) {
 internal fun FoodPresetCard(
     modifier: Modifier = Modifier,
     food: FoodReference,
+    displayName: String,
+    sourceLabel: String,
     selected: Boolean,
     onClick: () -> Unit,
     onRemove: () -> Unit,
@@ -777,9 +813,18 @@ internal fun FoodPresetCard(
             shape = AppControlShape
         ) {
             Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text(food.name, color = if (selected) Lime else Ink, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
-                Text("%.0f kcal / 100g".format(calories), color = Ink, fontSize = 11.sp)
-                Text(food.source, color = Muted, fontSize = 9.sp, maxLines = 1)
+                // 卡片宽度锁定 152dp：食物名固定占两行，卡片高度不会因中英文长短而参差。
+                Text(
+                    displayName,
+                    color = if (selected) Lime else Ink,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 2,
+                    minLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text("%.0f kcal / 100g".format(calories), color = Ink, fontSize = 11.sp, maxLines = 1)
+                Text(sourceLabel, color = Muted, fontSize = 9.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
         Box(
@@ -791,13 +836,24 @@ internal fun FoodPresetCard(
                 .clickable(onClick = onRemove),
             contentAlignment = Alignment.Center
         ) {
-            Icon(Icons.Rounded.Close, contentDescription = "从快速选择移除${food.name}", tint = Ink, modifier = Modifier.size(15.dp))
+            Icon(
+                Icons.Rounded.Close,
+                contentDescription = stringResource(R.string.meal_remove_cd).format(displayName),
+                tint = Ink,
+                modifier = Modifier.size(15.dp)
+            )
         }
     }
 }
 
 @Composable
-internal fun FoodPresetRow(food: FoodReference, selected: Boolean = false, onClick: () -> Unit) {
+internal fun FoodPresetRow(
+    food: FoodReference,
+    displayName: String,
+    sourceLabel: String,
+    selected: Boolean = false,
+    onClick: () -> Unit
+) {
     val calories = caloriesFromMacros(
         food.carbohydratesPer100g,
         food.proteinPer100g,
@@ -812,14 +868,22 @@ internal fun FoodPresetRow(food: FoodReference, selected: Boolean = false, onCli
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(Modifier.weight(1f)) {
-            Text(food.name, color = if (selected) Lime else Ink, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-            Text("${food.source} · 碳 %.1f / 蛋 %.1f / 脂 %.1fg".format(
-                food.carbohydratesPer100g,
-                food.proteinPer100g,
-                food.fatPer100g
-            ), color = Muted, fontSize = 10.sp)
+            Text(displayName, color = if (selected) Lime else Ink, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(
+                stringResource(R.string.food_row_macros).format(
+                    sourceLabel,
+                    food.carbohydratesPer100g,
+                    food.proteinPer100g,
+                    food.fatPer100g
+                ),
+                color = Muted,
+                fontSize = 10.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         }
-        Text("%.0f kcal/100g".format(calories), color = Ink, fontSize = 11.sp)
+        Spacer(Modifier.width(8.dp))
+        Text("%.0f kcal/100g".format(calories), color = Ink, fontSize = 11.sp, maxLines = 1)
     }
 }
 
@@ -828,7 +892,7 @@ internal fun NutritionField(label: String, value: String, onChange: (String) -> 
     OutlinedTextField(
         value = value,
         onValueChange = onChange,
-        label = { Text(label) },
+        label = { Text(label, fontSize = 11.sp, maxLines = 1) },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
         singleLine = true,
         modifier = modifier

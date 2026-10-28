@@ -62,9 +62,12 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -77,19 +80,31 @@ import com.ranke.health.model.TrainingSettings
 import com.ranke.health.model.WorkoutDay
 import com.ranke.health.model.WorkoutExercise
 import com.ranke.health.model.WorkoutFocus
+import com.ranke.health.model.WorkoutFocusKind
 import com.ranke.health.model.WorkoutStatistics
 import com.ranke.health.model.buildWorkoutCycle
 import com.ranke.health.model.calculateWorkoutStatistics
+import com.ranke.health.model.canonicalExerciseName
 import com.ranke.health.model.commonWorkoutExerciseNames
 import com.ranke.health.model.estimateWorkoutMinutes
+import com.ranke.health.model.exerciseDisplayName
 import com.ranke.health.model.recommendedWorkoutExerciseNames
 import com.ranke.health.model.spreadsheetWorkoutExerciseNames
 import com.ranke.health.model.summarizeWorkoutFocus
 import com.ranke.health.model.workoutExerciseMatches
 import com.ranke.health.ui.components.AppModalSheet
+import com.ranke.health.ui.components.FitText
 import com.ranke.health.ui.components.PrimaryModalButton
 import com.ranke.health.ui.components.WeekdayChip
-import com.ranke.health.ui.components.shortChinese
+import com.ranke.health.ui.i18n.LocalAppLocale
+import com.ranke.health.ui.i18n.isEnglish
+import com.ranke.health.ui.i18n.isEnglishUi
+import com.ranke.health.ui.i18n.label
+import com.ranke.health.ui.i18n.monthDayFormatter
+import com.ranke.health.ui.i18n.prDateFormatter
+import com.ranke.health.ui.i18n.shortName
+import com.ranke.health.ui.i18n.stripName
+import com.ranke.health.ui.i18n.workoutFocusTitle
 import com.ranke.health.ui.theme.AppBodySize
 import com.ranke.health.ui.theme.AppCaptionSize
 import com.ranke.health.ui.theme.AppCardPadding
@@ -103,10 +118,8 @@ import com.ranke.health.ui.theme.Background
 import com.ranke.health.ui.theme.CardOutline
 import com.ranke.health.ui.theme.Ink
 import com.ranke.health.ui.theme.Lime
-import com.ranke.health.ui.theme.MonthDayFormatter
 import com.ranke.health.ui.theme.Muted
 import com.ranke.health.ui.theme.Outline
-import com.ranke.health.ui.theme.PrDateFormatter
 import com.ranke.health.ui.theme.Raised
 import com.ranke.health.ui.theme.Surface
 import com.ranke.health.ui.theme.UpRed
@@ -128,6 +141,9 @@ internal fun TrainingPlanScreen(
     modifier: Modifier = Modifier
 ) {
     val today = remember { LocalDate.now() }
+    val locale = LocalAppLocale.current
+    val monthDay = remember(locale) { monthDayFormatter(locale) }
+    val english = isEnglish(locale)
     val initialMonday = remember(today) { today.minusDays((today.dayOfWeek.value - 1).toLong()) }
     var weekStart by remember { mutableStateOf(initialMonday) }
     var cycleStart by remember { mutableStateOf(initialMonday) }
@@ -217,8 +233,8 @@ internal fun TrainingPlanScreen(
         userScrollEnabled = canScroll
     ) {
         item {
-            Text("训练计划", color = Ink, fontSize = AppPageTitleSize, fontWeight = FontWeight.Black)
-            Text("今天练什么，一眼就知道", color = Muted, fontSize = AppBodySize)
+            Text(stringResource(R.string.train_title), color = Ink, fontSize = AppPageTitleSize, fontWeight = FontWeight.Black)
+            Text(stringResource(R.string.train_sub), color = Muted, fontSize = AppBodySize)
         }
         item {
             TrainingFocusHero(
@@ -231,22 +247,39 @@ internal fun TrainingPlanScreen(
             Card(colors = CardDefaults.cardColors(containerColor = Surface), shape = AppCardShape, border = BorderStroke(1.dp, CardOutline)) {
                 Column(Modifier.padding(AppCardPadding), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("第 ${selectedDay.cycleWeek ?: selectedCycleWeek} 周", color = Ink, fontSize = AppSectionTitleSize, fontWeight = FontWeight.Bold)
-                        Text(" / ${cycleWeeks ?: 4} 周", color = Muted, fontSize = AppBodySize)
+                        Text(
+                            stringResource(R.string.train_week_n).format(selectedDay.cycleWeek ?: selectedCycleWeek),
+                            color = Ink,
+                            fontSize = AppSectionTitleSize,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1
+                        )
+                        Spacer(Modifier.width(5.dp))
+                        Text(
+                            stringResource(R.string.train_of_weeks).format(cycleWeeks ?: 4),
+                            color = Muted,
+                            fontSize = AppBodySize,
+                            maxLines = 1
+                        )
                         Spacer(Modifier.weight(1f))
                         TextButton(onClick = { cycleExpanded = !cycleExpanded }) {
-                            Text(if (cycleExpanded) "收起设置" else "周期设置", color = Lime, fontWeight = FontWeight.Bold)
+                            Text(
+                                stringResource(if (cycleExpanded) R.string.train_collapse_settings else R.string.train_cycle_settings),
+                                color = Lime,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1
+                            )
                             Spacer(Modifier.width(4.dp))
                             Icon(Icons.Rounded.Tune, null, tint = Lime, modifier = Modifier.size(18.dp))
                         }
                     }
                     if (cycleExpanded) {
-                        Text("设置周期长度与减载周；减载周动作组数降至约 60%", color = Muted, fontSize = 11.sp)
+                        Text(stringResource(R.string.train_cycle_hint), color = Muted, fontSize = 11.sp)
                         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            OutlinedTextField(cycleWeeksInput, ::updateCycleWeeks, label = { Text("周期周数") }, suffix = { Text("周") }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.weight(1f))
-                            OutlinedTextField(deloadWeekInput, ::updateDeloadWeek, label = { Text("减载周") }, prefix = { Text("第 ") }, suffix = { Text("周") }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.weight(1f))
+                            OutlinedTextField(cycleWeeksInput, ::updateCycleWeeks, label = { Text(stringResource(R.string.train_cycle_weeks), maxLines = 1) }, suffix = { Text(stringResource(R.string.train_week_unit)) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.weight(1f))
+                            OutlinedTextField(deloadWeekInput, ::updateDeloadWeek, label = { Text(stringResource(R.string.train_deload_week), maxLines = 1) }, prefix = { Text(stringResource(R.string.train_week_prefix)) }, suffix = { Text(stringResource(R.string.train_week_unit)) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.weight(1f))
                         }
-                        if (!cycleSettingsValid) Text("周期为 1–12 周，减载周需位于周期内", color = UpRed, fontSize = 10.sp)
+                        if (!cycleSettingsValid) Text(stringResource(R.string.train_cycle_invalid), color = UpRed, fontSize = 10.sp)
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                             DayOfWeek.entries.forEach { day ->
                                 WeekdayChip(
@@ -262,7 +295,7 @@ internal fun TrainingPlanScreen(
                             }
                         }
                         if (cycleSettingsValid) {
-                            Text("选择要编辑的周", color = Muted, fontSize = 11.sp)
+                            Text(stringResource(R.string.train_pick_week), color = Muted, fontSize = 11.sp)
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                 (1..cycleWeeks!!).forEach { week ->
                                     FilterChip(
@@ -290,20 +323,21 @@ internal fun TrainingPlanScreen(
                     weekStart = next
                     selectedCycleWeek = (((next.toEpochDay() - cycleStart.toEpochDay()) / 7).toInt() + 1).coerceIn(1, cycleWeeks ?: 4)
                     selectedDate = (0L..6L).map(next::plusDays).firstOrNull { dayFor(it).mode == DayMode.TRAINING } ?: next
-                }) { Text("‹ 上周") }
+                }) { Text(stringResource(R.string.train_prev_week), maxLines = 1) }
                 Text(
-                    "${weekStart.format(MonthDayFormatter)} - ${weekStart.plusDays(6).format(MonthDayFormatter)}",
+                    "${weekStart.format(monthDay)} - ${weekStart.plusDays(6).format(monthDay)}",
                     color = Ink,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f),
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    maxLines = 1
                 )
                 TextButton(onClick = {
                     val next = weekStart.plusWeeks(1)
                     weekStart = next
                     selectedCycleWeek = (((next.toEpochDay() - cycleStart.toEpochDay()) / 7).toInt() + 1).coerceIn(1, cycleWeeks ?: 4)
                     selectedDate = (0L..6L).map(next::plusDays).firstOrNull { dayFor(it).mode == DayMode.TRAINING } ?: next
-                }) { Text("下周 ›") }
+                }) { Text(stringResource(R.string.train_next_week), maxLines = 1) }
             }
         }
         item {
@@ -318,13 +352,19 @@ internal fun TrainingPlanScreen(
                         border = BorderStroke(1.dp, if (date == selectedDate) Lime else Outline)
                     ) {
                         Column(Modifier.fillMaxWidth().padding(vertical = 9.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(date.dayOfWeek.shortChinese().removePrefix("周"), color = if (date == selectedDate) Background else Muted, fontSize = 10.sp)
+                            FitText(
+                                text = date.dayOfWeek.stripName(locale),
+                                maxFontSize = 10.sp,
+                                minFontSize = 7.sp,
+                                color = if (date == selectedDate) Background else Muted,
+                                textAlign = TextAlign.Center
+                            )
                             Text(date.dayOfMonth.toString(), color = if (date == selectedDate) Background else Ink, fontSize = 17.sp, fontWeight = FontWeight.Black)
                             Text(
                                 when {
                                     day.isCompleted -> "✓"
-                                    day.mode == DayMode.TRAINING -> "练"
-                                    else -> "休"
+                                    day.mode == DayMode.TRAINING -> stringResource(R.string.train_day_on)
+                                    else -> stringResource(R.string.train_day_off)
                                 },
                                 color = if (date == selectedDate) Background else if (day.isCompleted || day.mode == DayMode.TRAINING) Lime else Muted,
                                 fontSize = 10.sp,
@@ -340,10 +380,10 @@ internal fun TrainingPlanScreen(
                 Card(colors = CardDefaults.cardColors(containerColor = Surface), shape = AppCardShape, border = BorderStroke(1.dp, CardOutline)) {
                     Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("动作安排", color = Ink, fontSize = AppSectionTitleSize, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.train_exercise_plan), color = Ink, fontSize = AppSectionTitleSize, fontWeight = FontWeight.Bold, maxLines = 1)
                             Spacer(Modifier.weight(1f))
                             TextButton(onClick = { addingExercise = true }) {
-                                Text("添加动作", color = Lime, fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.train_add_exercise), color = Lime, fontWeight = FontWeight.Bold, maxLines = 1)
                                 Spacer(Modifier.width(4.dp))
                                 Icon(Icons.Rounded.Add, null, tint = Lime, modifier = Modifier.size(18.dp))
                             }
@@ -383,7 +423,7 @@ internal fun TrainingPlanScreen(
                                             .padding(start = 18.dp),
                                         contentAlignment = Alignment.CenterStart
                                     ) {
-                                        Text("删除", color = Background, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                        Text(stringResource(R.string.action_delete), color = Background, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                                     }
                                 }
                                 Row(
@@ -462,7 +502,13 @@ internal fun TrainingPlanScreen(
                         ) {
                             Icon(Icons.Rounded.Check, null)
                             Spacer(Modifier.width(7.dp))
-                            Text(if (selectedDay.isCompleted) "已完成 · 点击撤销" else "完成训练", fontWeight = FontWeight.Black)
+                            FitText(
+                                text = stringResource(if (selectedDay.isCompleted) R.string.train_done_undo else R.string.train_complete),
+                                maxFontSize = 14.sp,
+                                minFontSize = 10.sp,
+                                color = if (selectedDay.isCompleted) Lime else Background,
+                                fontWeight = FontWeight.Black
+                            )
                         }
                     }
                 }
@@ -471,8 +517,8 @@ internal fun TrainingPlanScreen(
             item {
                 Card(colors = CardDefaults.cardColors(containerColor = Surface), shape = AppCardShape, border = BorderStroke(1.dp, CardOutline)) {
                     Column(Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("今天安排恢复", color = Ink, fontSize = AppSectionTitleSize, fontWeight = FontWeight.Bold)
-                        Text("休息日不可添加训练动作", color = Muted, fontSize = 12.sp)
+                        Text(stringResource(R.string.train_rest_title), color = Ink, fontSize = AppSectionTitleSize, fontWeight = FontWeight.Bold, maxLines = 1)
+                        Text(stringResource(R.string.train_rest_sub), color = Muted, fontSize = 12.sp, textAlign = TextAlign.Center)
                     }
                 }
             }
@@ -515,24 +561,34 @@ internal fun TrainingPlanScreen(
 internal fun WorkoutStatisticsCard(statistics: WorkoutStatistics) {
     val topRegions = statistics.regionSets.take(6)
     val maxSets = topRegions.maxOfOrNull { it.second }?.coerceAtLeast(1) ?: 1
+    // 英文部位名（Hamstrings / Lower back）比中文长，列宽按语言放宽，避免挤压进度条。
+    val regionLabelWidth = if (isEnglishUi()) 88.dp else 68.dp
+    val setsWidth = if (isEnglishUi()) 58.dp else 50.dp
     Card(
         colors = CardDefaults.cardColors(containerColor = Surface),
         shape = AppCardShape,
         border = BorderStroke(1.dp, CardOutline)
     ) {
         Column(Modifier.fillMaxWidth().padding(AppCardPadding), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("训练统计", color = Ink, fontSize = AppSectionTitleSize, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.train_stats), color = Ink, fontSize = AppSectionTitleSize, fontWeight = FontWeight.Bold, maxLines = 1)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                StatisticValue("完成训练", statistics.completedSessions.toString(), "次", Modifier.weight(1f))
-                StatisticValue("完成周期", statistics.completedCycles.toString(), "周", Modifier.weight(1f))
+                StatisticValue(stringResource(R.string.train_stat_sessions), statistics.completedSessions.toString(), stringResource(R.string.train_stat_session_unit), Modifier.weight(1f))
+                StatisticValue(stringResource(R.string.train_stat_cycles), statistics.completedCycles.toString(), stringResource(R.string.train_stat_cycle_unit), Modifier.weight(1f))
             }
-            Text("部位容量", color = Ink, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.train_volume), color = Ink, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1)
             if (topRegions.isEmpty()) {
-                Text("完成一次训练后，这里会按部位累计有效组数", color = Muted, fontSize = AppCaptionSize)
+                Text(stringResource(R.string.train_volume_empty), color = Muted, fontSize = AppCaptionSize)
             } else {
                 topRegions.forEach { (region, sets) ->
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(region.label, color = Muted, fontSize = 12.sp, modifier = Modifier.width(68.dp))
+                        FitText(
+                            text = region.label(),
+                            maxFontSize = 12.sp,
+                            minFontSize = 9.sp,
+                            modifier = Modifier.width(regionLabelWidth),
+                            color = Muted
+                        )
+                        Spacer(Modifier.width(6.dp))
                         Box(Modifier.weight(1f).height(8.dp).background(Raised, CircleShape)) {
                             Box(
                                 Modifier.fillMaxWidth(sets.toFloat() / maxSets)
@@ -540,10 +596,19 @@ internal fun WorkoutStatisticsCard(statistics: WorkoutStatistics) {
                                     .background(Lime, CircleShape)
                             )
                         }
-                        Text("$sets 组", color = Ink, fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.width(50.dp), textAlign = androidx.compose.ui.text.style.TextAlign.End)
+                        Spacer(Modifier.width(8.dp))
+                        FitText(
+                            text = stringResource(R.string.train_sets_n).format(sets),
+                            maxFontSize = 12.sp,
+                            minFontSize = 9.sp,
+                            modifier = Modifier.width(setsWidth),
+                            color = Ink,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.End
+                        )
                     }
                 }
-                Text("复合动作会计入所有相关部位", color = Muted, fontSize = 10.sp)
+                Text(stringResource(R.string.train_volume_note), color = Muted, fontSize = 10.sp)
             }
         }
     }
@@ -551,28 +616,39 @@ internal fun WorkoutStatisticsCard(statistics: WorkoutStatistics) {
 
 // All three columns share the actual card width; no fixed-width cell can push
 // the edit icon outside the card. Stack the name on narrow/large-font screens.
+// 英文动作名明显更长（Romanian Deadlift vs 罗马尼亚硬拉），因此阈值按语言放宽，
+// 英文界面统一使用两行布局，名称与数值都不会被截断。
+internal fun workoutRowStacks(contentWidth: Dp, fontScale: Float, english: Boolean): Boolean =
+    contentWidth < (if (english) 380.dp else 300.dp) * fontScale.coerceAtLeast(1f)
+
 @Composable
 internal fun WorkoutExerciseRowContent(exercise: WorkoutExercise, modifier: Modifier = Modifier) {
-    val fontScale = LocalDensity.current.fontScale.coerceAtLeast(1f)
+    val density = LocalDensity.current
+    val english = isEnglishUi()
+    val displayName = exerciseDisplayName(exercise.name, english)
+    val setsReps = stringResource(R.string.train_sets_reps).format(exercise.sets, exercise.reps)
+    val editLabel = stringResource(R.string.train_edit_cd)
     BoxWithConstraints(modifier.fillMaxWidth()) {
-        val stacked = maxWidth < 300.dp * fontScale
+        val stacked = workoutRowStacks(maxWidth, density.fontScale, english)
         if (stacked) {
             Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(exercise.name, color = Ink, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, modifier = Modifier.weight(1f))
-                    Icon(Icons.Rounded.ChevronRight, contentDescription = "编辑动作", tint = Muted, modifier = Modifier.size(16.dp))
+                    Text(displayName, color = Ink, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, modifier = Modifier.weight(1f), maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    Icon(Icons.Rounded.ChevronRight, contentDescription = editLabel, tint = Muted, modifier = Modifier.size(16.dp))
                 }
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    WorkoutExerciseValue("${exercise.sets} 组 × ${exercise.reps} 次", Modifier.weight(1.3f))
-                    WorkoutExerciseValue(exercise.weight, Modifier.weight(1f), isWeight = true)
+                    // 重量是自由文本（"102.5 kg (75%)"、"123.5kg（85%）"），比组次更容易变长，
+                    // 堆叠布局把两列的宽度比调成 1:1.35，长重量串不用缩到最小字号。
+                    WorkoutExerciseValue(setsReps, Modifier.weight(1f))
+                    WorkoutExerciseValue(exercise.weight, Modifier.weight(1.35f), isWeight = true)
                 }
             }
         } else {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(exercise.name, color = Ink, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, modifier = Modifier.weight(1.1f))
-                WorkoutExerciseValue("${exercise.sets} 组 × ${exercise.reps} 次", Modifier.weight(1.3f))
-                WorkoutExerciseValue(exercise.weight, Modifier.weight(1f), isWeight = true)
-                Icon(Icons.Rounded.ChevronRight, contentDescription = "编辑动作", tint = Muted, modifier = Modifier.size(16.dp))
+                Text(displayName, color = Ink, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, modifier = Modifier.weight(1.1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                WorkoutExerciseValue(setsReps, Modifier.weight(1.1f))
+                WorkoutExerciseValue(exercise.weight, Modifier.weight(1.2f), isWeight = true)
+                Icon(Icons.Rounded.ChevronRight, contentDescription = editLabel, tint = Muted, modifier = Modifier.size(16.dp))
             }
         }
     }
@@ -586,19 +662,24 @@ internal fun WorkoutExerciseValue(value: String, modifier: Modifier, isWeight: B
             .padding(horizontal = 6.dp, vertical = 9.dp),
         contentAlignment = Alignment.Center
     ) {
-        Text(
-            value,
+        // 单元格高度固定 44dp；"4 sets × 2 reps" 靠缩小字号塞进同一格，不会撑高或裁字。
+        // 重量是自由文本，用户可能写成 "123.5kg（85%）"，最小字号留到 8sp 以容纳长串。
+        FitText(
+            text = value,
+            maxFontSize = if (isWeight) 14.sp else 12.sp,
+            minFontSize = 8.sp,
             color = Ink,
-            fontSize = if (isWeight) 14.sp else 12.sp,
             fontWeight = if (isWeight) FontWeight.Bold else FontWeight.Normal,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
+            textAlign = TextAlign.Center
         )
     }
 }
 
 @Composable
 internal fun ExercisePrCard(records: List<ExercisePr>, onAdd: () -> Unit) {
+    val locale = LocalAppLocale.current
+    val english = isEnglish(locale)
+    val dateFormat = remember(locale) { prDateFormatter(locale) }
     val bestRecords = records.groupBy { it.exerciseName }.values
         .mapNotNull { entries -> entries.maxByOrNull { it.estimatedOneRepMax } }
         .sortedByDescending { it.date }
@@ -609,25 +690,26 @@ internal fun ExercisePrCard(records: List<ExercisePr>, onAdd: () -> Unit) {
     ) {
         Column(Modifier.fillMaxWidth().padding(AppCardPadding), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("动作 PR", color = Ink, fontSize = AppSectionTitleSize, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.train_pr), color = Ink, fontSize = AppSectionTitleSize, fontWeight = FontWeight.Bold, maxLines = 1)
                 Spacer(Modifier.weight(1f))
                 TextButton(onClick = onAdd) {
-                    Text("记录 PR", color = Lime, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.train_pr_add), color = Lime, fontWeight = FontWeight.Bold, maxLines = 1)
                     Spacer(Modifier.width(4.dp))
                     Icon(Icons.Rounded.Add, null, tint = Lime, modifier = Modifier.size(18.dp))
                 }
             }
             if (bestRecords.isEmpty()) {
-                Text("选择动作，记录你的重量与次数纪录", color = Muted, fontSize = AppCaptionSize)
+                Text(stringResource(R.string.train_pr_empty), color = Muted, fontSize = AppCaptionSize)
             } else {
                 bestRecords.take(6).forEachIndexed { index, pr ->
                     Row(Modifier.fillMaxWidth().padding(vertical = 7.dp), verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
-                            Text(pr.exerciseName, color = Ink, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-                            Text(pr.date.format(PrDateFormatter), color = Muted, fontSize = 10.sp)
+                            Text(exerciseDisplayName(pr.exerciseName, english), color = Ink, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                            Text(pr.date.format(dateFormat), color = Muted, fontSize = 10.sp, maxLines = 1)
                         }
-                        Text(if (pr.weightKg % 1.0 == 0.0) pr.weightKg.toInt().toString() else "%.1f".format(pr.weightKg), color = Lime, fontSize = 22.sp, fontWeight = FontWeight.Black)
-                        Text(" kg × ${pr.reps}", color = Muted, fontSize = 11.sp)
+                        Spacer(Modifier.width(8.dp))
+                        Text(if (pr.weightKg % 1.0 == 0.0) pr.weightKg.toInt().toString() else "%.1f".format(pr.weightKg), color = Lime, fontSize = 22.sp, fontWeight = FontWeight.Black, maxLines = 1)
+                        Text(" kg × ${pr.reps}", color = Muted, fontSize = 11.sp, maxLines = 1)
                     }
                     if (index < bestRecords.take(6).lastIndex) Box(Modifier.fillMaxWidth().height(1.dp).background(Outline.copy(alpha = .45f)))
                 }
@@ -642,60 +724,81 @@ internal fun ExercisePrDialog(
     onDismiss: () -> Unit,
     onSave: (ExercisePr) -> Unit
 ) {
+    val english = isEnglishUi()
     var name by remember { mutableStateOf("") }
     var search by remember { mutableStateOf("") }
     var weight by remember { mutableStateOf("") }
     var reps by remember { mutableStateOf("1") }
-    val choices = remember(existingExerciseNames, search) {
+    val choices = remember(existingExerciseNames, search, english) {
         val all = (existingExerciseNames + recommendedWorkoutExerciseNames + commonWorkoutExerciseNames + spreadsheetWorkoutExerciseNames).distinct()
         if (search.isBlank()) (existingExerciseNames + recommendedWorkoutExerciseNames).distinct().take(9)
-        else all.filter { workoutExerciseMatches(it, search) }.take(9)
+        else all.filter { workoutExerciseMatches(it, search, english) }.take(9)
     }
     val weightValue = weight.replace(',', '.').toDoubleOrNull()
     val repsValue = reps.toIntOrNull()
     val valid = name.isNotBlank() && weightValue?.let { it > 0.0 && it <= 1000.0 } == true && repsValue?.let { it in 1..100 } == true
     AppModalSheet(
-        title = "记录动作 PR",
+        title = stringResource(R.string.train_pr_dialog),
         onDismiss = onDismiss,
         content = {
             OutlinedTextField(
                 search,
                 { search = it },
-                label = { Text("搜索动作") },
+                label = { Text(stringResource(R.string.train_search_exercise), maxLines = 1) },
                 leadingIcon = { Icon(Icons.Rounded.Search, null) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
             if (choices.isNotEmpty()) {
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    choices.chunked(3).forEach { rowChoices ->
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            rowChoices.forEach { choice ->
-                                FilterChip(
-                                    selected = name == choice,
-                                    onClick = { name = choice; search = choice },
-                                    label = { Text(choice, fontSize = 11.sp) },
-                                    modifier = Modifier.weight(1f)
-                                )
-                            }
-                            repeat(3 - rowChoices.size) { Spacer(Modifier.weight(1f)) }
-                        }
+                ExerciseChoiceChips(
+                    choices = choices,
+                    english = english,
+                    selectedName = name,
+                    onSelect = { choice ->
+                        name = exerciseDisplayName(choice, english)
+                        search = exerciseDisplayName(choice, english)
                     }
-                }
+                )
             }
-            OutlinedTextField(name, { name = it }, label = { Text("动作名称") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(name, { name = it }, label = { Text(stringResource(R.string.train_exercise_name), maxLines = 1) }, singleLine = true, modifier = Modifier.fillMaxWidth())
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedTextField(weight, { weight = it.filter { char -> char.isDigit() || char == '.' || char == ',' } }, label = { Text("重量") }, suffix = { Text("kg") }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.weight(1f))
-                OutlinedTextField(reps, { reps = it.filter(Char::isDigit).take(3) }, label = { Text("次数") }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.weight(1f))
+                OutlinedTextField(weight, { weight = it.filter { char -> char.isDigit() || char == '.' || char == ',' } }, label = { Text(stringResource(R.string.train_weight), maxLines = 1) }, suffix = { Text("kg") }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.weight(1f))
+                OutlinedTextField(reps, { reps = it.filter(Char::isDigit).take(3) }, label = { Text(stringResource(R.string.train_reps), maxLines = 1) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.weight(1f))
             }
-            Text("同一动作会保留历史记录，并展示估算强度最高的一次", color = Muted, fontSize = 10.sp)
+            Text(stringResource(R.string.train_pr_note), color = Muted, fontSize = 10.sp)
         },
         footer = {
-            PrimaryModalButton("保存 PR", valid) {
-                onSave(ExercisePr(System.currentTimeMillis(), name.trim(), weightValue!!, repsValue!!, LocalDate.now()))
+            PrimaryModalButton(stringResource(R.string.train_pr_save), valid) {
+                onSave(ExercisePr(System.currentTimeMillis(), canonicalExerciseName(name, english), weightValue!!, repsValue!!, LocalDate.now()))
             }
         }
     )
+}
+
+/** 三列动作选择芯片：英文名较长，用自适应字号保证同一行芯片宽度一致。 */
+@Composable
+internal fun ExerciseChoiceChips(
+    choices: List<String>,
+    english: Boolean,
+    selectedName: String,
+    onSelect: (String) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        choices.chunked(3).forEach { rowChoices ->
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                rowChoices.forEach { choice ->
+                    val display = exerciseDisplayName(choice, english)
+                    FilterChip(
+                        selected = selectedName == display,
+                        onClick = { onSelect(choice) },
+                        label = { FitText(display, maxFontSize = 11.sp, minFontSize = 8.sp) },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                repeat(3 - rowChoices.size) { Spacer(Modifier.weight(1f)) }
+            }
+        }
+    }
 }
 
 @Composable
@@ -703,16 +806,19 @@ internal fun StatisticValue(label: String, value: String, unit: String, modifier
     Column(
         modifier.background(Raised, AppControlShape).padding(horizontal = 14.dp, vertical = 12.dp)
     ) {
-        Text(label, color = Muted, fontSize = AppCaptionSize)
+        Text(label, color = Muted, fontSize = AppCaptionSize, maxLines = 1)
         Row(verticalAlignment = Alignment.Bottom) {
-            Text(value, color = Lime, fontSize = 28.sp, fontWeight = FontWeight.Black)
-            Text(" $unit", color = Muted, fontSize = 11.sp, modifier = Modifier.padding(bottom = 4.dp))
+            Text(value, color = Lime, fontSize = 28.sp, fontWeight = FontWeight.Black, maxLines = 1)
+            // 英文的单位与标签重复，资源里留空，这里直接不渲染。
+            if (unit.isNotBlank()) {
+                Text(" $unit", color = Muted, fontSize = 11.sp, modifier = Modifier.padding(bottom = 4.dp), maxLines = 1)
+            }
         }
     }
 }
 
 internal fun workoutBackgroundResource(focus: WorkoutFocus): Int = when {
-    focus.title == "腿部力量" || focus.title == "后链力量" -> R.drawable.training_bg_leg_power
+    focus.kind == WorkoutFocusKind.LEG_POWER || focus.kind == WorkoutFocusKind.POSTERIOR_CHAIN -> R.drawable.training_bg_leg_power
     focus.primaryRegion == MuscleRegion.CHEST -> R.drawable.training_bg_chest
     focus.primaryRegion == MuscleRegion.BACK -> R.drawable.training_bg_back
     focus.primaryRegion == MuscleRegion.SHOULDERS -> R.drawable.training_bg_shoulders
@@ -734,6 +840,8 @@ internal fun TrainingFocusHero(
     day: WorkoutDay,
     focus: WorkoutFocus
 ) {
+    val locale = LocalAppLocale.current
+    val monthDay = remember(locale) { monthDayFormatter(locale) }
     val estimatedMinutes = estimateWorkoutMinutes(day.exercises)
     Card(
         colors = CardDefaults.cardColors(containerColor = Surface),
@@ -765,38 +873,44 @@ internal fun TrainingFocusHero(
             )
             Column(Modifier.fillMaxSize().padding(18.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("今日训练", color = Ink, fontSize = AppSectionTitleSize, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.train_today_title), color = Ink, fontSize = AppSectionTitleSize, fontWeight = FontWeight.Bold, maxLines = 1)
                     Spacer(Modifier.weight(1f))
                     Box(
                         Modifier.border(1.dp, Lime, AppControlShape).padding(horizontal = 13.dp, vertical = 7.dp)
                     ) {
-                        Text(day.mode.label, color = Lime, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Text(day.mode.label(), color = Lime, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1)
                     }
                 }
                 Spacer(Modifier.height(16.dp))
-                Text(
-                    if (day.mode == DayMode.TRAINING) focus.title else "好好休息",
+                // "Posterior Chain" 在 39sp 下会超过卡片宽度，按可用宽度自动缩小字号。
+                FitText(
+                    text = if (day.mode == DayMode.TRAINING) workoutFocusTitle(focus) else stringResource(R.string.train_rest_hero),
+                    maxFontSize = 39.sp,
+                    minFontSize = 22.sp,
                     color = Lime,
-                    fontSize = 39.sp,
                     fontWeight = FontWeight.Black
                 )
-                Text("${date.format(MonthDayFormatter)}  ${date.dayOfWeek.shortChinese()}", color = Muted, fontSize = 14.sp)
+                Text("${date.format(monthDay)}  ${date.dayOfWeek.shortName(locale)}", color = Muted, fontSize = 14.sp, maxLines = 1)
                 Spacer(Modifier.height(9.dp))
                 Text(
-                    if (day.mode == DayMode.TRAINING) "饮食目标 · 训练日" else "饮食目标 · 休息日",
+                    stringResource(if (day.mode == DayMode.TRAINING) R.string.train_diet_training else R.string.train_diet_rest),
                     color = Lime,
                     fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1
                 )
                 Spacer(Modifier.weight(1f))
                 if (day.mode == DayMode.TRAINING) {
                     Row(Modifier.fillMaxWidth()) {
                         Text(day.exercises.size.toString(), color = Lime, fontSize = 42.sp, fontWeight = FontWeight.Black, modifier = Modifier.alignByBaseline())
-                        Text(" 动作", color = Muted, fontSize = 12.sp, modifier = Modifier.alignByBaseline())
+                        Spacer(Modifier.width(5.dp))
+                        Text(stringResource(R.string.train_unit_lifts), color = Muted, fontSize = 12.sp, modifier = Modifier.alignByBaseline(), maxLines = 1)
                         Spacer(Modifier.weight(1f))
-                        Text("约 ", color = Muted, fontSize = 12.sp, modifier = Modifier.alignByBaseline())
+                        Text(stringResource(R.string.train_about), color = Muted, fontSize = 12.sp, modifier = Modifier.alignByBaseline(), maxLines = 1)
+                        Spacer(Modifier.width(4.dp))
                         Text(estimatedMinutes.toString(), color = Lime, fontSize = 42.sp, fontWeight = FontWeight.Black, modifier = Modifier.alignByBaseline())
-                        Text(" 分钟", color = Muted, fontSize = 12.sp, modifier = Modifier.alignByBaseline())
+                        Spacer(Modifier.width(5.dp))
+                        Text(stringResource(R.string.train_unit_minutes), color = Muted, fontSize = 12.sp, modifier = Modifier.alignByBaseline(), maxLines = 1)
                     }
                 }
             }
@@ -811,60 +925,56 @@ internal fun ExerciseEditorDialog(
     onDismiss: () -> Unit,
     onSave: (WorkoutExercise) -> Unit
 ) {
-    var name by remember(initial) { mutableStateOf(initial?.name.orEmpty()) }
+    val english = isEnglishUi()
+    // 输入框里显示英文名，保存时再反查回中文数据键。
+    var name by remember(initial) { mutableStateOf(initial?.let { exerciseDisplayName(it.name, english) }.orEmpty()) }
     var sets by remember(initial) { mutableStateOf(initial?.sets?.toString() ?: "4") }
     var reps by remember(initial) { mutableStateOf(initial?.reps ?: "5") }
     var weight by remember(initial) { mutableStateOf(initial?.weight ?: "80%") }
     var search by remember(initial) { mutableStateOf("") }
-    val choices = remember(existingExerciseNames, search) {
+    val choices = remember(existingExerciseNames, search, english) {
         if (search.isBlank()) recommendedWorkoutExerciseNames
         else (existingExerciseNames + commonWorkoutExerciseNames + spreadsheetWorkoutExerciseNames)
-            .distinct().filter { workoutExerciseMatches(it, search) }.take(9)
+            .distinct().filter { workoutExerciseMatches(it, search, english) }.take(9)
     }
     val valid = name.isNotBlank() && sets.toIntOrNull()?.let { it in 1..30 } == true && reps.isNotBlank() && weight.isNotBlank()
     AppModalSheet(
-        title = if (initial == null) "添加动作" else "编辑动作",
+        title = stringResource(if (initial == null) R.string.train_add_exercise else R.string.train_edit_cd),
         onDismiss = onDismiss,
         content = {
             OutlinedTextField(
                 value = search,
                 onValueChange = { search = it },
-                label = { Text("搜索动作") },
-                placeholder = { Text("搜索计划内动作或常用动作") },
+                label = { Text(stringResource(R.string.train_search_exercise), maxLines = 1) },
+                placeholder = { Text(stringResource(R.string.train_search_hint), maxLines = 1) },
                 leadingIcon = { Icon(Icons.Rounded.Search, null) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
-            Text(if (search.isBlank()) "推荐动作" else "搜索结果", color = Muted, fontSize = 11.sp)
+            Text(stringResource(if (search.isBlank()) R.string.train_recommended else R.string.train_results), color = Muted, fontSize = 11.sp)
             if (choices.isNotEmpty()) {
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    choices.chunked(3).forEach { rowChoices ->
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            rowChoices.forEach { choice ->
-                                FilterChip(
-                                    selected = name == choice,
-                                    onClick = { name = choice; search = choice },
-                                    label = { Text(choice, fontSize = 11.sp) },
-                                    modifier = Modifier.weight(1f)
-                                )
-                            }
-                            repeat(3 - rowChoices.size) { Spacer(Modifier.weight(1f)) }
-                        }
+                ExerciseChoiceChips(
+                    choices = choices,
+                    english = english,
+                    selectedName = name,
+                    onSelect = { choice ->
+                        name = exerciseDisplayName(choice, english)
+                        search = exerciseDisplayName(choice, english)
                     }
-                }
+                )
             } else {
-                Text("没有找到动作，可直接输入动作名称", color = Muted, fontSize = 11.sp)
+                Text(stringResource(R.string.train_no_result), color = Muted, fontSize = 11.sp)
             }
-            OutlinedTextField(name, { name = it }, label = { Text("动作名称") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(name, { name = it }, label = { Text(stringResource(R.string.train_exercise_name), maxLines = 1) }, singleLine = true, modifier = Modifier.fillMaxWidth())
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedTextField(sets, { sets = it.filter(Char::isDigit) }, label = { Text("组数") }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.weight(1f))
-                OutlinedTextField(reps, { reps = it }, label = { Text("次数") }, singleLine = true, modifier = Modifier.weight(1f))
+                OutlinedTextField(sets, { sets = it.filter(Char::isDigit) }, label = { Text(stringResource(R.string.train_sets), maxLines = 1) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.weight(1f))
+                OutlinedTextField(reps, { reps = it }, label = { Text(stringResource(R.string.train_reps), maxLines = 1) }, singleLine = true, modifier = Modifier.weight(1f))
             }
-            OutlinedTextField(weight, { weight = it }, label = { Text("重量 / 强度") }, placeholder = { Text("例如 80kg 或 85%") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(weight, { weight = it }, label = { Text(stringResource(R.string.train_weight_intensity), maxLines = 1) }, placeholder = { Text(stringResource(R.string.train_weight_hint), maxLines = 1) }, singleLine = true, modifier = Modifier.fillMaxWidth())
         },
         footer = {
-            PrimaryModalButton("保存动作", valid) {
-                onSave(WorkoutExercise(initial?.id ?: System.currentTimeMillis(), name.trim(), sets.toInt(), reps.trim(), weight.trim()))
+            PrimaryModalButton(stringResource(R.string.train_save_exercise), valid) {
+                onSave(WorkoutExercise(initial?.id ?: System.currentTimeMillis(), canonicalExerciseName(name, english), sets.toInt(), reps.trim(), weight.trim()))
             }
         }
     )

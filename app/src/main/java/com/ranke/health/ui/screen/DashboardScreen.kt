@@ -57,11 +57,15 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import com.ranke.health.R
 import com.ranke.health.core.demoCandles
 import com.ranke.health.model.CaloriePlan
 import com.ranke.health.model.Candle
@@ -71,11 +75,19 @@ import com.ranke.health.model.MealEntry
 import com.ranke.health.model.MealPeriod
 import com.ranke.health.model.WeightEntry
 import com.ranke.health.model.fiveDayMovingAverage
+import com.ranke.health.model.sourceDisplayName
 import com.ranke.health.model.weightsToCandles
 import com.ranke.health.ui.components.AppModalSheet
+import com.ranke.health.ui.components.FitText
 import com.ranke.health.ui.components.MealSectionTitle
 import com.ranke.health.ui.components.PrimaryModalButton
-import com.ranke.health.ui.components.shortChinese
+import com.ranke.health.ui.i18n.LocalAppLocale
+import com.ranke.health.ui.i18n.isEnglish
+import com.ranke.health.ui.i18n.isEnglishUi
+import com.ranke.health.ui.i18n.label
+import com.ranke.health.ui.i18n.monthDayFormatter
+import com.ranke.health.ui.i18n.shortDateFormatter
+import com.ranke.health.ui.i18n.shortName
 import com.ranke.health.ui.theme.AppCardPadding
 import com.ranke.health.ui.theme.AppCardShape
 import com.ranke.health.ui.theme.AppControlShape
@@ -87,12 +99,10 @@ import com.ranke.health.ui.theme.DashboardSection
 import com.ranke.health.ui.theme.DownGreen
 import com.ranke.health.ui.theme.Ink
 import com.ranke.health.ui.theme.Lime
-import com.ranke.health.ui.theme.MonthDayFormatter
 import com.ranke.health.ui.theme.MovingAverage
 import com.ranke.health.ui.theme.Muted
 import com.ranke.health.ui.theme.Outline
 import com.ranke.health.ui.theme.Raised
-import com.ranke.health.ui.theme.ShortDateFormatter
 import com.ranke.health.ui.theme.Surface
 import com.ranke.health.ui.theme.TrendRange
 import com.ranke.health.ui.theme.UpRed
@@ -143,20 +153,22 @@ internal fun DraggableDashboardBlock(
 internal fun Header(plan: CaloriePlan) {
     val today = LocalDate.now()
     val mode = plan.modeFor(today)
+    val locale = LocalAppLocale.current
+    val monthDay = remember(locale) { monthDayFormatter(locale) }
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
             Row {
                 Text("man", color = Ink, fontSize = AppPageTitleSize, fontWeight = FontWeight.Black, modifier = Modifier.alignByBaseline())
-                Text("牛", color = Lime, fontSize = AppPageTitleSize, fontWeight = FontWeight.Black, modifier = Modifier.alignByBaseline())
+                Text(stringResource(R.string.brand_suffix), color = Lime, fontSize = AppPageTitleSize, fontWeight = FontWeight.Black, modifier = Modifier.alignByBaseline())
             }
-            Text("看见每一天的身体趋势", color = Muted, fontSize = 13.sp)
+            Text(stringResource(R.string.header_tagline), color = Muted, fontSize = 13.sp)
         }
         Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(7.dp)) {
-            Text("${today.format(MonthDayFormatter)} ${today.dayOfWeek.shortChinese()}", color = Ink, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+            Text("${today.format(monthDay)} ${today.dayOfWeek.shortName(locale)}", color = Ink, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
             Box(
                 Modifier.border(1.dp, Lime, AppControlShape).padding(horizontal = 13.dp, vertical = 7.dp)
             ) {
-                Text(mode.label, color = Lime, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text(mode.label(), color = Lime, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1)
             }
         }
     }
@@ -176,6 +188,7 @@ internal fun TodayNutritionHero(meals: List<MealEntry>, plan: CaloriePlan) {
     val protein = todayMeals.sumOf { it.proteinGrams }
     val fat = todayMeals.sumOf { it.fatGrams }
     val progress = (consumed / goal).coerceIn(0.0, 1.0).toFloat()
+    val macroLabelWidth = if (isEnglishUi()) 64.dp else 52.dp
 
     Card(
         colors = CardDefaults.cardColors(containerColor = Surface),
@@ -185,35 +198,46 @@ internal fun TodayNutritionHero(meals: List<MealEntry>, plan: CaloriePlan) {
         Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text("今日摄入", color = Ink, fontSize = AppSectionTitleSize, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.dash_today_intake), color = Ink, fontSize = AppSectionTitleSize, fontWeight = FontWeight.Bold)
                     Row {
                         Text("%,.0f".format(consumed), color = Lime, fontSize = 42.sp, fontWeight = FontWeight.Black, modifier = Modifier.alignByBaseline())
                         Text(" kcal", color = Muted, fontSize = 13.sp, modifier = Modifier.alignByBaseline())
                     }
-                    Text("目标 %,.0f  ·  剩余 %,.0f".format(goal, (goal - consumed).coerceAtLeast(0.0)), color = Muted, fontSize = 11.sp)
+                    Text(
+                        stringResource(R.string.dash_goal_remaining).format(goal, (goal - consumed).coerceAtLeast(0.0)),
+                        color = Muted,
+                        fontSize = 11.sp,
+                        maxLines = 2
+                    )
                 }
-                Text("%.0f%%".format(progress * 100), color = Lime, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                Text("%.0f%%".format(progress * 100), color = Lime, fontSize = 20.sp, fontWeight = FontWeight.Bold, maxLines = 1)
             }
             Box(Modifier.fillMaxWidth().height(8.dp).background(Raised, CircleShape)) {
                 Box(Modifier.fillMaxWidth(progress).height(8.dp).background(Lime, CircleShape))
             }
-            MacroProgressRow("碳水", carbs, targetCarbs, Lime)
-            MacroProgressRow("蛋白质", protein, targetProtein, DownGreen)
-            MacroProgressRow("脂肪", fat, targetFat, UpRed)
+            MacroProgressRow(stringResource(R.string.macro_carbs), carbs, targetCarbs, Lime, macroLabelWidth)
+            MacroProgressRow(stringResource(R.string.macro_protein), protein, targetProtein, DownGreen, macroLabelWidth)
+            MacroProgressRow(stringResource(R.string.macro_fat), fat, targetFat, UpRed, macroLabelWidth)
         }
     }
 }
 
 @Composable
-internal fun MacroProgressRow(label: String, consumed: Double, target: Double, color: Color) {
+internal fun MacroProgressRow(label: String, consumed: Double, target: Double, color: Color, labelWidth: Dp = 52.dp) {
     val progress = (consumed / target.coerceAtLeast(1.0)).coerceIn(0.0, 1.0).toFloat()
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(label, color = Ink, fontSize = 12.sp, modifier = Modifier.width(52.dp))
+        FitText(label, maxFontSize = 12.sp, minFontSize = 9.sp, modifier = Modifier.width(labelWidth), color = Ink)
         Box(Modifier.weight(1f).height(6.dp).background(Raised, CircleShape)) {
             Box(Modifier.fillMaxWidth(progress).height(6.dp).background(color, CircleShape))
         }
         Spacer(Modifier.width(10.dp))
-        Text("%.0f/%.0fg".format(consumed, target), color = if (progress >= 1f) color else Muted, fontSize = 11.sp, modifier = Modifier.width(70.dp))
+        FitText(
+            text = "%.0f/%.0fg".format(consumed, target),
+            maxFontSize = 11.sp,
+            minFontSize = 8.sp,
+            modifier = Modifier.width(70.dp),
+            color = if (progress >= 1f) color else Muted
+        )
     }
 }
 
@@ -231,15 +255,15 @@ internal fun SaveCenterCard(
                 }
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
-                    Text("保存中心", color = Ink, fontWeight = FontWeight.Bold, fontSize = AppSectionTitleSize)
-                    Text("完整备份包含当前身体设置与全部记录", color = Muted, fontSize = 11.sp)
+                    Text(stringResource(R.string.save_center), color = Ink, fontWeight = FontWeight.Bold, fontSize = AppSectionTitleSize)
+                    Text(stringResource(R.string.save_center_sub), color = Muted, fontSize = 11.sp)
                 }
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TextButton(onClick = onRestoreData, modifier = Modifier.weight(1f), colors = ButtonDefaults.textButtonColors(contentColor = Lime)) {
                     Icon(Icons.Rounded.Download, null, modifier = Modifier.size(17.dp))
                     Spacer(Modifier.width(5.dp))
-                    Text("恢复数据")
+                    FitText(stringResource(R.string.restore_data), maxFontSize = 14.sp, minFontSize = 10.sp, color = Lime)
                 }
                 Button(
                     onClick = onSaveData,
@@ -250,7 +274,13 @@ internal fun SaveCenterCard(
                 ) {
                     Icon(Icons.Rounded.Save, null, modifier = Modifier.size(17.dp))
                     Spacer(Modifier.width(5.dp))
-                    Text("保存全部数据", fontWeight = FontWeight.Bold)
+                    FitText(
+                        stringResource(R.string.save_all_data),
+                        maxFontSize = 14.sp,
+                        minFontSize = 10.sp,
+                        color = Background,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }
@@ -266,8 +296,8 @@ internal fun TodaySummary(state: DashboardState) {
         state.meals.filter { it.time.atZone(zone).toLocalDate() == today }.sumOf { it.kilocalories }
     }
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        MetricCard(Modifier.weight(1f), "当前体重", latest?.let { "%.1f kg".format(it) } ?: "-- kg", Icons.Rounded.Scale)
-        MetricCard(Modifier.weight(1f), "今日摄入", "%.0f kcal".format(todayCalories), Icons.Rounded.Restaurant)
+        MetricCard(Modifier.weight(1f), stringResource(R.string.profile_weight), latest?.let { "%.1f kg".format(it) } ?: "-- kg", Icons.Rounded.Scale)
+        MetricCard(Modifier.weight(1f), stringResource(R.string.dash_today_intake), "%.0f kcal".format(todayCalories), Icons.Rounded.Restaurant)
     }
 }
 
@@ -277,8 +307,8 @@ internal fun MetricCard(modifier: Modifier, label: String, value: String, icon: 
         Column(Modifier.padding(17.dp)) {
             Icon(icon, null, tint = Muted, modifier = Modifier.size(20.dp))
             Spacer(Modifier.height(18.dp))
-            Text(label, color = Muted, fontSize = 12.sp)
-            Text(value, color = Ink, fontSize = 19.sp, fontWeight = FontWeight.ExtraBold)
+            Text(label, color = Muted, fontSize = 12.sp, maxLines = 1)
+            FitText(value, maxFontSize = 19.sp, minFontSize = 13.sp, color = Ink, fontWeight = FontWeight.ExtraBold)
         }
     }
 }
@@ -302,22 +332,25 @@ internal fun WeightChartCard(entries: List<WeightEntry>, meals: List<MealEntry>,
         }
     }
     val change = candles.lastOrNull()?.let { it.close - it.open } ?: 0.0
+    val locale = LocalAppLocale.current
+    val monthDay = remember(locale) { monthDayFormatter(locale) }
+    val shortDate = remember(locale) { shortDateFormatter(locale) }
     Card(colors = CardDefaults.cardColors(containerColor = Surface), shape = AppCardShape, border = BorderStroke(1.dp, CardOutline)) {
         Column(Modifier.padding(AppCardPadding)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("体重趋势", color = Ink, fontWeight = FontWeight.Bold, fontSize = AppSectionTitleSize)
+                        Text(stringResource(R.string.dash_weight_trend), color = Ink, fontWeight = FontWeight.Bold, fontSize = AppSectionTitleSize, maxLines = 1)
                         if (isDemo) {
                             Spacer(Modifier.width(8.dp))
-                            Text("演示", color = Muted, fontSize = 10.sp, modifier = Modifier.background(Background, AppControlShape).padding(7.dp, 3.dp))
+                            Text(stringResource(R.string.dash_demo), color = Muted, fontSize = 10.sp, modifier = Modifier.background(Background, AppControlShape).padding(7.dp, 3.dp), maxLines = 1)
                         }
                     }
-                    Text("红涨绿待上涨 · ${selectedRange.label}", color = Muted, fontSize = 12.sp)
+                    Text(stringResource(R.string.dash_range_note), color = Muted, fontSize = 12.sp, maxLines = 1)
                 }
                 Column(horizontalAlignment = Alignment.End) {
-                    Text("%+.1f kg".format(change), color = if (change >= 0) UpRed else DownGreen, fontWeight = FontWeight.Bold)
-                    Text("当日开盘至收盘", color = Muted, fontSize = 10.sp)
+                    Text("%+.1f kg".format(change), color = if (change >= 0) UpRed else DownGreen, fontWeight = FontWeight.Bold, maxLines = 1)
+                    Text(stringResource(R.string.dash_open_close), color = Muted, fontSize = 10.sp, maxLines = 1)
                 }
                 Spacer(Modifier.width(10.dp))
                 AddButton(onAdd)
@@ -328,21 +361,18 @@ internal fun WeightChartCard(entries: List<WeightEntry>, meals: List<MealEntry>,
                     FilterChip(
                         selected = selectedRange == range,
                         onClick = { selectedRange = range },
-                        label = { Text(range.label, fontSize = 11.sp) }
+                        label = { Text(range.label(), fontSize = 11.sp, maxLines = 1) }
                     )
                 }
             }
             Spacer(Modifier.height(18.dp))
-            WeightCalorieChart(candles, caloriesByDate, Modifier.fillMaxWidth().height(300.dp))
+            WeightCalorieChart(candles, caloriesByDate, monthDay, shortDate, Modifier.fillMaxWidth().height(300.dp))
             Spacer(Modifier.height(10.dp))
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                Legend(UpRed, "上涨")
-                Spacer(Modifier.width(18.dp))
-                Legend(DownGreen, "待上涨")
-                Spacer(Modifier.width(18.dp))
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(14.dp, Alignment.CenterHorizontally)) {
+                Legend(UpRed, stringResource(R.string.legend_up))
+                Legend(DownGreen, stringResource(R.string.legend_down))
                 Legend(MovingAverage, "MA5")
-                Spacer(Modifier.width(18.dp))
-                Text("柱高 = 每日摄入", color = Muted, fontSize = 11.sp)
+                Text(stringResource(R.string.dash_bars_note), color = Muted, fontSize = 11.sp, maxLines = 1)
             }
         }
     }
@@ -350,8 +380,9 @@ internal fun WeightChartCard(entries: List<WeightEntry>, meals: List<MealEntry>,
 
 @Composable
 internal fun AddButton(onClick: () -> Unit) {
+    val addLabel = stringResource(R.string.action_add)
     Box(Modifier.size(38.dp).background(Raised, CircleShape).clickable(onClick = onClick), contentAlignment = Alignment.Center) {
-        Icon(Icons.Rounded.Add, "添加", tint = Lime)
+        Icon(Icons.Rounded.Add, addLabel, tint = Lime)
     }
 }
 
@@ -360,15 +391,26 @@ internal fun Legend(color: Color, text: String) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.size(7.dp).background(color, CircleShape))
         Spacer(Modifier.width(5.dp))
-        Text(text, color = Muted, fontSize = 11.sp)
+        Text(text, color = Muted, fontSize = 11.sp, maxLines = 1)
     }
 }
 
 @Composable
-internal fun WeightCalorieChart(candles: List<Candle>, caloriesByDate: Map<LocalDate, Double>, modifier: Modifier = Modifier) {
+internal fun WeightCalorieChart(
+    candles: List<Candle>,
+    caloriesByDate: Map<LocalDate, Double>,
+    monthDay: java.time.format.DateTimeFormatter,
+    shortDate: java.time.format.DateTimeFormatter,
+    modifier: Modifier = Modifier
+) {
     if (candles.isEmpty()) return
     var selectedIndex by remember(candles.map { it.date }) { mutableStateOf<Int?>(null) }
     val labelWidthPx = with(LocalDensity.current) { 42.dp.toPx() }
+    val locale = LocalAppLocale.current
+    // Canvas 的 DrawScope 不是 Composable，文案必须在进入画布前取好。
+    val dailyKcalLabel = stringResource(R.string.dash_daily_kcal)
+    val weightFormat = stringResource(R.string.dash_weight_value)
+    val intakeFormat = stringResource(R.string.dash_intake_value)
     Canvas(
         modifier.pointerInput(candles) {
             detectTapGestures { tap ->
@@ -457,7 +499,7 @@ internal fun WeightCalorieChart(candles: List<Candle>, caloriesByDate: Map<Local
         }
 
         drawLine(grid, Offset(0f, volumeTop - 10.dp.toPx()), Offset(chartWidth, volumeTop - 10.dp.toPx()), 1.dp.toPx())
-        drawContext.canvas.nativeCanvas.drawText("每日热量", 0f, volumeTop - 14.dp.toPx(), textPaint)
+        drawContext.canvas.nativeCanvas.drawText(dailyKcalLabel, 0f, volumeTop - 14.dp.toPx(), textPaint)
         drawContext.canvas.nativeCanvas.drawText("${calorieMax.toInt()} kcal", chartWidth + 4.dp.toPx(), volumeTop + 4.dp.toPx(), textPaint)
         drawContext.canvas.nativeCanvas.drawText("0", chartWidth + 8.dp.toPx(), volumeBottom, textPaint)
 
@@ -474,7 +516,7 @@ internal fun WeightCalorieChart(candles: List<Candle>, caloriesByDate: Map<Local
                 )
             }
             if (index == 0 || index == candles.lastIndex || index == candles.size / 2) {
-                val label = candle.date.format(ShortDateFormatter)
+                val label = candle.date.format(shortDate)
                 val measured = textPaint.measureText(label)
                 drawContext.canvas.nativeCanvas.drawText(label, (x - measured / 2).coerceIn(0f, chartWidth - measured), size.height - 3.dp.toPx(), textPaint)
             }
@@ -498,10 +540,15 @@ internal fun WeightCalorieChart(candles: List<Candle>, caloriesByDate: Map<Local
                 textSize = 11.sp.toPx()
                 isAntiAlias = true
             }
-            val dateText = "${candle.date.format(MonthDayFormatter)} ${candle.date.dayOfWeek.shortChinese()}"
-            val weightText = "体重 %.1f kg".format(candle.close)
-            val calorieText = "热量 %.0f kcal".format(calories)
-            val tooltipWidth = 116.dp.toPx()
+            val dateText = "${candle.date.format(monthDay)} ${candle.date.dayOfWeek.shortName(locale)}"
+            val weightText = weightFormat.format(candle.close)
+            val calorieText = intakeFormat.format(calories)
+            // 英文文案更长，气泡宽度按实际文字测量，避免文字溢出气泡或气泡被撑变形。
+            val tooltipWidth = maxOf(
+                tooltipPaint.measureText(weightText),
+                tooltipPaint.measureText(calorieText),
+                tooltipPaint.measureText(dateText)
+            ) + 20.dp.toPx()
             val tooltipHeight = 64.dp.toPx()
             val tooltipLeft = if (x + tooltipWidth + 8.dp.toPx() <= chartWidth) x + 8.dp.toPx() else x - tooltipWidth - 8.dp.toPx()
             val tooltipTop = (weightY - tooltipHeight / 2f).coerceIn(4.dp.toPx(), candleHeight - tooltipHeight - 4.dp.toPx())
@@ -531,22 +578,34 @@ internal fun CalorieCard(
 ) {
     val today = LocalDate.now()
     val zone = ZoneId.systemDefault()
-    val goal = plan.targetFor(today)
     val todayMeals = meals.filter { it.time.atZone(zone).toLocalDate() == today }
     val visiblePeriods = plan.mealPeriodsFor(today)
+    val addLabel = stringResource(R.string.log_food)
+    val editPlanLabel = stringResource(R.string.dash_edit_plan_cd)
     Card(colors = CardDefaults.cardColors(containerColor = Surface), shape = AppCardShape, border = BorderStroke(1.dp, CardOutline)) {
         Column(Modifier.padding(AppCardPadding)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text("${visiblePeriods.size}餐进度", color = Ink, fontSize = AppSectionTitleSize, fontWeight = FontWeight.Bold)
-                    Text(if (plan.modeFor(today) == DayMode.TRAINING) "训练日包含练前餐" else "休息日不安排练前餐", color = Muted, fontSize = 11.sp)
+                    Text(
+                        stringResource(R.string.dash_meal_count).format(visiblePeriods.size),
+                        color = Ink,
+                        fontSize = AppSectionTitleSize,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1
+                    )
+                    Text(
+                        stringResource(if (plan.modeFor(today) == DayMode.TRAINING) R.string.dash_training_pre else R.string.dash_rest_no_pre),
+                        color = Muted,
+                        fontSize = 11.sp,
+                        maxLines = 1
+                    )
                 }
                 Box(Modifier.size(38.dp).background(Raised, CircleShape).clickable(onClick = onEditPlan), contentAlignment = Alignment.Center) {
-                    Icon(Icons.Rounded.Tune, "设置营养计划", tint = Muted, modifier = Modifier.size(19.dp))
+                    Icon(Icons.Rounded.Tune, editPlanLabel, tint = Muted, modifier = Modifier.size(19.dp))
                 }
                 Spacer(Modifier.width(8.dp))
                 Box(Modifier.size(38.dp).background(Raised, CircleShape).clickable(onClick = onAdd), contentAlignment = Alignment.Center) {
-                    Icon(Icons.Rounded.Add, "记录饮食", tint = Lime)
+                    Icon(Icons.Rounded.Add, addLabel, tint = Lime)
                 }
             }
             Spacer(Modifier.height(14.dp))
@@ -586,11 +645,16 @@ internal fun MealProgressRow(
             Box(Modifier.size(9.dp).background(periodColor, CircleShape))
             Spacer(Modifier.width(9.dp))
             Column {
-                Text(period.label, color = Ink, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                Text("碳 %.0fg  蛋 %.0fg  脂 %.0fg".format(macroTarget.first, macroTarget.second, macroTarget.third), color = Muted, fontSize = 9.sp)
+                Text(period.label(), color = Ink, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                Text(
+                    stringResource(R.string.meal_macros_energy).format(macroTarget.first, macroTarget.second, macroTarget.third),
+                    color = Muted,
+                    fontSize = 9.sp,
+                    maxLines = 1
+                )
             }
             Spacer(Modifier.weight(1f))
-            Text("%.0f / %.0f kcal".format(consumed, target), color = Muted, fontSize = 11.sp)
+            Text("%.0f / %.0f kcal".format(consumed, target), color = Muted, fontSize = 11.sp, maxLines = 1)
             Spacer(Modifier.width(5.dp))
             Icon(Icons.AutoMirrored.Rounded.ArrowForward, null, tint = Muted, modifier = Modifier.size(14.dp))
         }
@@ -608,10 +672,10 @@ internal fun DailyTipCard(meals: List<MealEntry>, plan: CaloriePlan) {
     val consumed = todayMeals.sumOf { it.kilocalories }
     val goal = plan.targetFor(today)
     val tip = when {
-        todayMeals.isEmpty() -> "记下第一餐，才能看见今天的营养趋势"
-        consumed > goal -> "今日已超出目标，剩余时间选择清淡食物并适量活动"
-        todayMeals.sumOf { it.proteinGrams } < plan.macroTargetsFor(today).second * .5 -> "今日蛋白质进度偏低，下一餐可优先选鱼、蛋或瘦肉"
-        else -> "晚餐后散步 20 分钟，有助于稳定餐后状态"
+        todayMeals.isEmpty() -> stringResource(R.string.tip_first_meal)
+        consumed > goal -> stringResource(R.string.tip_over_target)
+        todayMeals.sumOf { it.proteinGrams } < plan.macroTargetsFor(today).second * .5 -> stringResource(R.string.tip_low_protein)
+        else -> stringResource(R.string.tip_walk)
     }
     Card(colors = CardDefaults.cardColors(containerColor = Surface), shape = AppCardShape, border = BorderStroke(1.dp, CardOutline)) {
         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -620,7 +684,7 @@ internal fun DailyTipCard(meals: List<MealEntry>, plan: CaloriePlan) {
             }
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
-                Text("今日提示", color = Lime, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.dash_today_tip), color = Lime, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1)
                 Spacer(Modifier.height(3.dp))
                 Text(tip, color = Ink, fontSize = 12.sp)
             }
@@ -630,6 +694,7 @@ internal fun DailyTipCard(meals: List<MealEntry>, plan: CaloriePlan) {
 
 @Composable
 internal fun MealRow(meal: MealEntry, onClick: () -> Unit) {
+    val english = isEnglishUi()
     Row(
         Modifier.fillMaxWidth().background(Surface, AppCardShape)
             .border(1.dp, Outline, AppCardShape).clickable(onClick = onClick).padding(15.dp),
@@ -640,15 +705,21 @@ internal fun MealRow(meal: MealEntry, onClick: () -> Unit) {
         }
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
-            Text(meal.name, color = Ink, fontWeight = FontWeight.SemiBold)
-            Text("${meal.period.label} · ${meal.source}", color = Muted, fontSize = 11.sp)
+            Text(meal.name, color = Ink, fontWeight = FontWeight.SemiBold, maxLines = 2)
             Text(
-                "碳水 %.1fg  蛋白 %.1fg  脂肪 %.1fg".format(meal.carbohydratesGrams, meal.proteinGrams, meal.fatGrams),
+                "${meal.period.label()} · ${sourceDisplayName(meal.source, english)}",
                 color = Muted,
-                fontSize = 10.sp
+                fontSize = 11.sp,
+                maxLines = 1
+            )
+            Text(
+                stringResource(R.string.meal_macros_full).format(meal.carbohydratesGrams, meal.proteinGrams, meal.fatGrams),
+                color = Muted,
+                fontSize = 10.sp,
+                maxLines = 1
             )
         }
-        Text("%.0f kcal".format(meal.kilocalories), color = Ink, fontWeight = FontWeight.Bold)
+        Text("%.0f kcal".format(meal.kilocalories), color = Ink, fontWeight = FontWeight.Bold, maxLines = 1)
     }
 }
 
@@ -656,9 +727,11 @@ internal fun MealRow(meal: MealEntry, onClick: () -> Unit) {
 internal fun WeightDialog(entries: List<WeightEntry>, onDismiss: () -> Unit, onSave: (Double) -> Unit) {
     var value by remember { mutableStateOf("") }
     val parsed = value.toDoubleOrNull()
+    val locale = LocalAppLocale.current
+    val monthDay = remember(locale) { monthDayFormatter(locale) }
     AppModalSheet(
-        title = "记录体重",
-        subtitle = "今天的体重",
+        title = stringResource(R.string.weight_dialog_title),
+        subtitle = stringResource(R.string.weight_dialog_sub),
         onDismiss = onDismiss,
         content = {
             OutlinedTextField(
@@ -671,9 +744,9 @@ internal fun WeightDialog(entries: List<WeightEntry>, onDismiss: () -> Unit, onS
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
-            Text("支持 20–400 kg，保留一位小数即可", color = Muted, fontSize = 11.sp)
+            Text(stringResource(R.string.weight_range_hint), color = Muted, fontSize = 11.sp)
             if (entries.isNotEmpty()) {
-                MealSectionTitle("最近记录", "用于确认本次输入是否合理")
+                MealSectionTitle(stringResource(R.string.weight_recent_title), stringResource(R.string.weight_recent_sub))
                 entries.sortedByDescending { it.time }.take(5).forEach { entry ->
                     val date = entry.time.atZone(ZoneId.systemDefault()).toLocalDate()
                     Row(
@@ -681,14 +754,14 @@ internal fun WeightDialog(entries: List<WeightEntry>, onDismiss: () -> Unit, onS
                             .border(1.dp, Outline, AppControlShape).padding(13.dp, 11.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("${date.format(MonthDayFormatter)} ${date.dayOfWeek.shortChinese()}", color = Ink, modifier = Modifier.weight(1f))
-                        Text("%.1f kg".format(entry.kilograms), color = Lime, fontWeight = FontWeight.Bold)
+                        Text("${date.format(monthDay)} ${date.dayOfWeek.shortName(locale)}", color = Ink, modifier = Modifier.weight(1f), maxLines = 1)
+                        Text("%.1f kg".format(entry.kilograms), color = Lime, fontWeight = FontWeight.Bold, maxLines = 1)
                     }
                 }
             }
         },
         footer = {
-            PrimaryModalButton("保存体重", parsed != null && parsed in 20.0..400.0) { parsed?.let(onSave) }
+            PrimaryModalButton(stringResource(R.string.weight_save), parsed != null && parsed in 20.0..400.0) { parsed?.let(onSave) }
         }
     )
 }

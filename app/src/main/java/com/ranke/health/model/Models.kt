@@ -7,12 +7,14 @@ import java.time.ZoneId
 
 data class WeightEntry(val time: Instant, val kilograms: Double, val source: String)
 
-enum class MealPeriod(val label: String, val targetShare: Double) {
-    BREAKFAST("早餐", .20),
-    LUNCH("午餐", .30),
-    PRE_WORKOUT("练前餐", .0),
-    DINNER("晚餐", .35),
-    NIGHT_SNACK("宵夜", .15)
+// 枚举不持有显示文案：中文名仍是动作/食物等数据的规范键，但界面文案统一由
+// ui/i18n 层按当前语言翻译，避免模型层依赖 Android 资源。
+enum class MealPeriod(val targetShare: Double) {
+    BREAKFAST(.20),
+    LUNCH(.30),
+    PRE_WORKOUT(.0),
+    DINNER(.35),
+    NIGHT_SNACK(.15)
 }
 
 fun inferMealPeriod(
@@ -111,7 +113,9 @@ data class ExercisePr(
     val estimatedOneRepMax: Double get() = weightKg * (1.0 + reps / 30.0)
 }
 
-enum class BiologicalSex(val label: String) { MALE("男"), FEMALE("女") }
+enum class BiologicalSex { MALE, FEMALE }
+
+enum class BmiStatus { UNDERWEIGHT, NORMAL, OVERWEIGHT, OBESE }
 
 data class HealthProfile(
     val heightCm: Double = 176.0,
@@ -126,11 +130,11 @@ data class HealthProfile(
     val proteinPerKg: Double = 1.4
 ) {
     val bmi: Double get() = weightKg / ((heightCm / 100.0) * (heightCm / 100.0))
-    val bmiLabel: String get() = when {
-        bmi < 18.5 -> "偏瘦"
-        bmi < 24.0 -> "正常"
-        bmi < 28.0 -> "超重"
-        else -> "肥胖"
+    val bmiStatus: BmiStatus get() = when {
+        bmi < 18.5 -> BmiStatus.UNDERWEIGHT
+        bmi < 24.0 -> BmiStatus.NORMAL
+        bmi < 28.0 -> BmiStatus.OVERWEIGHT
+        else -> BmiStatus.OBESE
     }
     val basalMetabolicRate: Double get() =
         10.0 * weightKg + 6.25 * heightCm - 5.0 * age + if (sex == BiologicalSex.MALE) 5.0 else -161.0
@@ -144,7 +148,7 @@ data class HealthProfile(
     val dailyProteinGrams: Double get() = weightKg * proteinPerKg
 }
 
-enum class DayMode(val label: String) { TRAINING("训练日"), REST("休息日") }
+enum class DayMode { TRAINING, REST }
 
 data class WorkoutExercise(
     val id: Long,
@@ -256,16 +260,25 @@ private val workoutExerciseInitials = mapOf(
     "跳箱" to "tx", "雪橇推" to "xqt", "负重行走" to "fzxz"
 )
 
-fun workoutExerciseMatches(name: String, query: String): Boolean {
+// english = true 时额外匹配英文动作名与英文首字母缩略（例如 "rdl" 可命中罗马尼亚硬拉）。
+// 默认 false，纯中文环境与既有单元测试行为不变。
+fun workoutExerciseMatches(name: String, query: String, english: Boolean = false): Boolean {
     val normalized = query.trim().lowercase().replace(" ", "")
-    return normalized.isEmpty() || name.contains(query.trim(), ignoreCase = true) ||
-        workoutExerciseInitials[name]?.contains(normalized) == true
+    if (normalized.isEmpty() || name.contains(query.trim(), ignoreCase = true)) return true
+    if (workoutExerciseInitials[name]?.contains(normalized) == true) return true
+    if (!english) return false
+    val englishName = exerciseEnglishNames[name] ?: return false
+    if (englishName.contains(query.trim(), ignoreCase = true)) return true
+    val initials = englishName.split(' ', '-', '(', ')', '/')
+        .filter { it.isNotBlank() }
+        .joinToString("") { it.first().lowercase() }
+    return initials.contains(normalized)
 }
 
-enum class MuscleRegion(val label: String) {
-    CHEST("胸部"), BACK("背部"), SHOULDERS("肩部"), BICEPS("肱二头肌"), TRICEPS("肱三头肌"),
-    CORE("腹部"), GLUTES("臀部"), QUADS("股四头肌"), HAMSTRINGS("腘绳肌"), CALVES("小腿"),
-    LOWER_BACK("下背"), ERECTOR_SPINAE("竖脊肌")
+enum class MuscleRegion {
+    CHEST, BACK, SHOULDERS, BICEPS, TRICEPS,
+    CORE, GLUTES, QUADS, HAMSTRINGS, CALVES,
+    LOWER_BACK, ERECTOR_SPINAE
 }
 
 fun muscleRegionsForExercise(name: String): Set<MuscleRegion> = buildSet {
@@ -293,14 +306,18 @@ fun muscleRegionsForExercise(name: String): Set<MuscleRegion> = buildSet {
     }
 }
 
+// 训练主题用语义枚举表达，标题文案在 UI 层翻译；背景图选择也直接依据 kind，
+// 不再靠中文字符串比较。
+enum class WorkoutFocusKind { PREPARATION, LEG_POWER, PUSH, PULL, POSTERIOR_CHAIN, REGION }
+
 data class WorkoutFocus(
-    val title: String,
+    val kind: WorkoutFocusKind,
     val primaryRegion: MuscleRegion?,
     val regions: List<MuscleRegion>
 )
 
 fun summarizeWorkoutFocus(exercises: List<WorkoutExercise>): WorkoutFocus {
-    if (exercises.isEmpty()) return WorkoutFocus("准备训练", null, emptyList())
+    if (exercises.isEmpty()) return WorkoutFocus(WorkoutFocusKind.PREPARATION, null, emptyList())
     val scores = exercises
         .flatMap { exercise ->
             val weight = exercise.sets.coerceIn(1, 6)
@@ -316,14 +333,14 @@ fun summarizeWorkoutFocus(exercises: List<WorkoutExercise>): WorkoutFocus {
     val pushRegions = setOf(MuscleRegion.CHEST, MuscleRegion.SHOULDERS, MuscleRegion.TRICEPS)
     val pullRegions = setOf(MuscleRegion.BACK, MuscleRegion.BICEPS)
     val posteriorRegions = setOf(MuscleRegion.BACK, MuscleRegion.LOWER_BACK, MuscleRegion.ERECTOR_SPINAE, MuscleRegion.GLUTES, MuscleRegion.HAMSTRINGS)
-    val title = when {
-        active.intersect(legRegions).size >= 2 -> "腿部力量"
-        active.containsAll(pushRegions) -> "胸肩推力"
-        active.containsAll(pullRegions) -> "背部拉力"
-        active.intersect(posteriorRegions).size >= 3 -> "后链力量"
-        else -> "${ranked.first().label}训练"
+    val kind = when {
+        active.intersect(legRegions).size >= 2 -> WorkoutFocusKind.LEG_POWER
+        active.containsAll(pushRegions) -> WorkoutFocusKind.PUSH
+        active.containsAll(pullRegions) -> WorkoutFocusKind.PULL
+        active.intersect(posteriorRegions).size >= 3 -> WorkoutFocusKind.POSTERIOR_CHAIN
+        else -> WorkoutFocusKind.REGION
     }
-    return WorkoutFocus(title, ranked.firstOrNull(), ranked)
+    return WorkoutFocus(kind, ranked.firstOrNull(), ranked)
 }
 
 data class WorkoutStatistics(

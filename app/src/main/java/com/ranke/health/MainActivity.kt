@@ -1,6 +1,6 @@
 package com.ranke.health
 
-
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -10,7 +10,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -36,6 +35,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -43,6 +43,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -60,6 +61,9 @@ import com.ranke.health.model.TrainingSettings
 import com.ranke.health.model.WorkoutDay
 import com.ranke.health.ui.components.CaloriePlanDialog
 import com.ranke.health.ui.components.MealDialog
+import com.ranke.health.ui.i18n.AppLanguage
+import com.ranke.health.ui.i18n.LocalAppLocale
+import com.ranke.health.ui.i18n.LocaleSettings
 import com.ranke.health.ui.screen.CalorieCard
 import com.ranke.health.ui.screen.DailyTipCard
 import com.ranke.health.ui.screen.DraggableDashboardBlock
@@ -91,157 +95,176 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
+    // 语言偏好在任何资源加载之前套用，重建后整个应用（含 Compose 资源）即为对应语言。
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(LocaleSettings.wrap(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val local = LocalStore(this)
         val dataBackup = DataBackup(this, local)
         setContent {
-            MaterialTheme(
-                colorScheme = darkColorScheme(
-                    primary = Lime,
-                    onPrimary = Background,
-                    background = Background,
-                    onBackground = Ink,
-                    surface = Surface,
-                    onSurface = Ink,
-                    surfaceVariant = Raised,
-                    onSurfaceVariant = Muted,
-                    secondaryContainer = Lime,
-                    onSecondaryContainer = Background,
-                    outline = Outline,
-                    error = UpRed
-                )
-            ) {
-                val scope = rememberCoroutineScope()
-                val storeMutex = remember { Mutex() }
-                var state by remember { mutableStateOf(DashboardState(loading = true)) }
-
-                fun readState(): DashboardState {
-                    val workoutDays = local.workoutDays()
-                    return DashboardState(
-                        weights = local.weights(),
-                        meals = local.meals(),
-                        customFoods = local.customFoods(),
-                        hiddenQuickFoodNames = local.hiddenQuickFoodNames(),
-                        quickFoodOrder = local.quickFoodOrder(),
-                        dashboardSectionOrder = local.dashboardSectionOrder(),
-                        caloriePlan = local.caloriePlan().copy(
-                            dayModeOverrides = workoutDays.associate { it.date to it.mode }
-                        ),
-                        healthProfile = local.healthProfile(),
-                        workoutDays = workoutDays,
-                        exercisePrs = local.exercisePrs(),
-                        trainingSettings = local.trainingSettings()
+            val appLocale = remember { this@MainActivity.resources.configuration.locales[0] }
+            CompositionLocalProvider(LocalAppLocale provides appLocale) {
+                MaterialTheme(
+                    colorScheme = darkColorScheme(
+                        primary = Lime,
+                        onPrimary = Background,
+                        background = Background,
+                        onBackground = Ink,
+                        surface = Surface,
+                        onSurface = Ink,
+                        surfaceVariant = Raised,
+                        onSurfaceVariant = Muted,
+                        secondaryContainer = Lime,
+                        onSecondaryContainer = Background,
+                        outline = Outline,
+                        error = UpRed
                     )
-                }
+                ) {
+                    val scope = rememberCoroutineScope()
+                    val storeMutex = remember { Mutex() }
+                    var state by remember { mutableStateOf(DashboardState(loading = true)) }
+                    var language by remember { mutableStateOf(LocaleSettings.language(this@MainActivity)) }
 
-                suspend fun refresh() {
-                    storeMutex.withLock {
-                        state = withContext(Dispatchers.IO) { readState() }
+                    fun readState(): DashboardState {
+                        val workoutDays = local.workoutDays()
+                        return DashboardState(
+                            weights = local.weights(),
+                            meals = local.meals(),
+                            customFoods = local.customFoods(),
+                            hiddenQuickFoodNames = local.hiddenQuickFoodNames(),
+                            quickFoodOrder = local.quickFoodOrder(),
+                            dashboardSectionOrder = local.dashboardSectionOrder(),
+                            caloriePlan = local.caloriePlan().copy(
+                                dayModeOverrides = workoutDays.associate { it.date to it.mode }
+                            ),
+                            healthProfile = local.healthProfile(),
+                            workoutDays = workoutDays,
+                            exercisePrs = local.exercisePrs(),
+                            trainingSettings = local.trainingSettings()
+                        )
                     }
-                }
 
-                fun mutateStore(block: () -> Unit) {
-                    scope.launch {
+                    suspend fun refresh() {
                         storeMutex.withLock {
-                            state = withContext(Dispatchers.IO) {
-                                block()
-                                readState()
-                            }
+                            state = withContext(Dispatchers.IO) { readState() }
                         }
                     }
-                }
 
-                val saveDataLauncher = rememberLauncherForActivityResult(
-                    ActivityResultContracts.CreateDocument("application/json")
-                ) { uri ->
-                    if (uri != null) scope.launch {
-                        runCatching {
-                            contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-                        }
-                        val success = dataBackup.saveTo(uri)
-                        if (success) local.saveBackupUri(uri.toString())
-                        Toast.makeText(this@MainActivity, if (success) "数据已保存，之后将直接覆盖此文件" else "保存失败", Toast.LENGTH_SHORT).show()
-                    }
-                }
-
-                val restoreDataLauncher = rememberLauncherForActivityResult(
-                    ActivityResultContracts.OpenDocument()
-                ) { uri ->
-                    if (uri != null) scope.launch {
-                        val success = dataBackup.restoreFrom(uri)
-                        Toast.makeText(this@MainActivity, if (success) "数据已恢复" else "数据文件无效", Toast.LENGTH_SHORT).show()
-                        refresh()
-                    }
-                }
-
-                LaunchedEffect(Unit) { refresh() }
-
-                RankeApp(
-                    state = state,
-                    onAddWeight = { kg ->
-                        mutateStore { local.addWeight(kg) }
-                    },
-                    onAddMeal = { name, kcal, period, carbs, protein, fat ->
-                        mutateStore { local.addMeal(name, kcal, period, carbs, protein, fat) }
-                    },
-                    onUpdateMeal = { original, name, kcal, period, carbs, protein, fat ->
-                        mutateStore { local.updateMeal(original, name, kcal, period, carbs, protein, fat) }
-                    },
-                    onSavePlan = { plan ->
-                        mutateStore {
-                            val previousTrainingDays = local.caloriePlan().trainingDays
-                            local.saveCaloriePlan(plan)
-                            if (plan.trainingDays != previousTrainingDays) {
-                                local.saveWorkoutDays(local.workoutDays().map { day ->
-                                    day.copy(mode = if (day.date.dayOfWeek in plan.trainingDays) DayMode.TRAINING else DayMode.REST)
-                                })
-                            }
-                        }
-                    },
-                    onSaveProfile = { profile ->
-                        mutateStore { local.saveHealthProfile(profile) }
-                    },
-                    onSaveWorkoutDays = { days ->
-                        mutateStore { local.saveWorkoutDays(days) }
-                    },
-                    onAddExercisePr = { pr ->
-                        mutateStore { local.addExercisePr(pr) }
-                    },
-                    onSaveTrainingSettings = { settings ->
-                        mutateStore { local.saveTrainingSettings(settings) }
-                    },
-                    onSaveFoodPreset = { food ->
-                        mutateStore { local.saveFoodPreset(food) }
-                    },
-                    onHideQuickFood = { name ->
-                        mutateStore { local.hideQuickFood(name) }
-                    },
-                    onReorderQuickFoods = { names ->
-                        mutateStore { local.saveQuickFoodOrder(names) }
-                    },
-                    onReorderDashboardSections = { names ->
-                        mutateStore { local.saveDashboardSectionOrder(names) }
-                    },
-                    onSaveData = {
-                        val savedUri = local.savedBackupUri()?.let(Uri::parse)
-                        if (savedUri == null) {
-                            saveDataLauncher.launch("man牛健康数据.json")
-                        } else {
-                            scope.launch {
-                                val success = dataBackup.saveTo(savedUri)
-                                if (success) {
-                                    Toast.makeText(this@MainActivity, "已覆盖原数据文件", Toast.LENGTH_SHORT).show()
-                                } else {
-                                    local.clearBackupUri()
-                                    Toast.makeText(this@MainActivity, "原文件不可用，请重新选择保存位置", Toast.LENGTH_SHORT).show()
-                                    saveDataLauncher.launch("man牛健康数据.json")
+                    fun mutateStore(block: () -> Unit) {
+                        scope.launch {
+                            storeMutex.withLock {
+                                state = withContext(Dispatchers.IO) {
+                                    block()
+                                    readState()
                                 }
                             }
                         }
-                    },
-                    onRestoreData = { restoreDataLauncher.launch(arrayOf("application/json", "text/plain")) }
-                )
+                    }
+
+                    val saveDataLauncher = rememberLauncherForActivityResult(
+                        ActivityResultContracts.CreateDocument("application/json")
+                    ) { uri ->
+                        if (uri != null) scope.launch {
+                            runCatching {
+                                contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                            }
+                            val success = dataBackup.saveTo(uri)
+                            if (success) local.saveBackupUri(uri.toString())
+                            val message = if (success) R.string.toast_data_saved else R.string.toast_save_failed
+                            Toast.makeText(this@MainActivity, message, Toast.LENGTH_SHORT).show()
+                        }
+                    }
+
+                    val restoreDataLauncher = rememberLauncherForActivityResult(
+                        ActivityResultContracts.OpenDocument()
+                    ) { uri ->
+                        if (uri != null) scope.launch {
+                            val success = dataBackup.restoreFrom(uri)
+                            val message = if (success) R.string.toast_data_restored else R.string.toast_invalid_file
+                            Toast.makeText(this@MainActivity, message, Toast.LENGTH_SHORT).show()
+                            refresh()
+                        }
+                    }
+
+                    LaunchedEffect(Unit) { refresh() }
+
+                    RankeApp(
+                        state = state,
+                        language = language,
+                        onLanguageChange = { selected ->
+                            language = selected
+                            LocaleSettings.setLanguage(this@MainActivity, selected)
+                            // 资源随配置变化，重建 Activity 让全应用立即换语言。
+                            this@MainActivity.recreate()
+                        },
+                        onAddWeight = { kg ->
+                            mutateStore { local.addWeight(kg) }
+                        },
+                        onAddMeal = { name, kcal, period, carbs, protein, fat ->
+                            mutateStore { local.addMeal(name, kcal, period, carbs, protein, fat) }
+                        },
+                        onUpdateMeal = { original, name, kcal, period, carbs, protein, fat ->
+                            mutateStore { local.updateMeal(original, name, kcal, period, carbs, protein, fat) }
+                        },
+                        onSavePlan = { plan ->
+                            mutateStore {
+                                val previousTrainingDays = local.caloriePlan().trainingDays
+                                local.saveCaloriePlan(plan)
+                                if (plan.trainingDays != previousTrainingDays) {
+                                    local.saveWorkoutDays(local.workoutDays().map { day ->
+                                        day.copy(mode = if (day.date.dayOfWeek in plan.trainingDays) DayMode.TRAINING else DayMode.REST)
+                                    })
+                                }
+                            }
+                        },
+                        onSaveProfile = { profile ->
+                            mutateStore { local.saveHealthProfile(profile) }
+                        },
+                        onSaveWorkoutDays = { days ->
+                            mutateStore { local.saveWorkoutDays(days) }
+                        },
+                        onAddExercisePr = { pr ->
+                            mutateStore { local.addExercisePr(pr) }
+                        },
+                        onSaveTrainingSettings = { settings ->
+                            mutateStore { local.saveTrainingSettings(settings) }
+                        },
+                        onSaveFoodPreset = { food ->
+                            mutateStore { local.saveFoodPreset(food) }
+                        },
+                        onHideQuickFood = { name ->
+                            mutateStore { local.hideQuickFood(name) }
+                        },
+                        onReorderQuickFoods = { names ->
+                            mutateStore { local.saveQuickFoodOrder(names) }
+                        },
+                        onReorderDashboardSections = { names ->
+                            mutateStore { local.saveDashboardSectionOrder(names) }
+                        },
+                        onSaveData = {
+                            val backupFileName = getString(R.string.backup_file_name)
+                            val savedUri = local.savedBackupUri()?.let(Uri::parse)
+                            if (savedUri == null) {
+                                saveDataLauncher.launch(backupFileName)
+                            } else {
+                                scope.launch {
+                                    val success = dataBackup.saveTo(savedUri)
+                                    if (success) {
+                                        Toast.makeText(this@MainActivity, R.string.toast_overwritten, Toast.LENGTH_SHORT).show()
+                                    } else {
+                                        local.clearBackupUri()
+                                        Toast.makeText(this@MainActivity, R.string.toast_file_unavailable, Toast.LENGTH_SHORT).show()
+                                        saveDataLauncher.launch(backupFileName)
+                                    }
+                                }
+                            }
+                        },
+                        onRestoreData = { restoreDataLauncher.launch(arrayOf("application/json", "text/plain")) }
+                    )
+                }
             }
         }
     }
@@ -250,6 +273,8 @@ class MainActivity : ComponentActivity() {
 @Composable
 internal fun RankeApp(
     state: DashboardState,
+    language: AppLanguage,
+    onLanguageChange: (AppLanguage) -> Unit,
     onAddWeight: (Double) -> Unit,
     onAddMeal: (String, Double, MealPeriod, Double, Double, Double) -> Unit,
     onUpdateMeal: (MealEntry, String, Double, MealPeriod, Double, Double, Double) -> Unit,
@@ -281,32 +306,43 @@ internal fun RankeApp(
         containerColor = Background,
         bottomBar = {
             NavigationBar(containerColor = Surface) {
+                val nutritionLabel = stringResource(R.string.nav_nutrition)
+                val trainingLabel = stringResource(R.string.nav_training)
+                val profileLabel = stringResource(R.string.nav_profile)
                 NavigationBarItem(
                     selected = selectedTab == AppTab.HOME,
                     onClick = { selectedTab = AppTab.HOME },
-                    icon = { Icon(Icons.Rounded.Home, "饮食计划") },
-                    label = { Text("饮食计划") },
+                    icon = { Icon(Icons.Rounded.Home, nutritionLabel) },
+                    label = { Text(nutritionLabel, maxLines = 1) },
                     colors = NavigationBarItemDefaults.colors(selectedIconColor = Background, selectedTextColor = Lime, indicatorColor = Lime, unselectedIconColor = Muted, unselectedTextColor = Muted)
                 )
                 NavigationBarItem(
                     selected = selectedTab == AppTab.TRAINING,
                     onClick = { selectedTab = AppTab.TRAINING },
-                    icon = { Icon(Icons.Rounded.FitnessCenter, "训练计划") },
-                    label = { Text("训练计划") },
+                    icon = { Icon(Icons.Rounded.FitnessCenter, trainingLabel) },
+                    label = { Text(trainingLabel, maxLines = 1) },
                     colors = NavigationBarItemDefaults.colors(selectedIconColor = Background, selectedTextColor = Lime, indicatorColor = Lime, unselectedIconColor = Muted, unselectedTextColor = Muted)
                 )
                 NavigationBarItem(
                     selected = selectedTab == AppTab.PROFILE,
                     onClick = { selectedTab = AppTab.PROFILE },
-                    icon = { Icon(Icons.Rounded.Person, "我") },
-                    label = { Text("我") },
+                    icon = { Icon(Icons.Rounded.Person, profileLabel) },
+                    label = { Text(profileLabel, maxLines = 1) },
                     colors = NavigationBarItemDefaults.colors(selectedIconColor = Background, selectedTextColor = Lime, indicatorColor = Lime, unselectedIconColor = Muted, unselectedTextColor = Muted)
                 )
             }
         }
     ) { padding ->
         if (selectedTab == AppTab.PROFILE) {
-            ProfileScreen(state.healthProfile, onSaveProfile, onSaveData, onRestoreData, Modifier.padding(padding))
+            ProfileScreen(
+                profile = state.healthProfile,
+                language = language,
+                onLanguageChange = onLanguageChange,
+                onSave = onSaveProfile,
+                onSaveData = onSaveData,
+                onRestoreData = onRestoreData,
+                modifier = Modifier.padding(padding)
+            )
             return@Scaffold
         }
         if (selectedTab == AppTab.TRAINING) {
@@ -375,11 +411,11 @@ internal fun RankeApp(
                 ) {
                     Icon(Icons.Rounded.Restaurant, null)
                     Spacer(Modifier.width(9.dp))
-                    Text("记录饮食", fontSize = 17.sp, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.log_food), fontSize = 17.sp, fontWeight = FontWeight.Bold, maxLines = 1)
                 }
             }
             if (state.meals.isNotEmpty()) {
-                item { Text("最近饮食", color = Ink, fontSize = AppSectionTitleSize, fontWeight = FontWeight.Bold) }
+                item { Text(stringResource(R.string.recent_meals), color = Ink, fontSize = AppSectionTitleSize, fontWeight = FontWeight.Bold) }
                 items(state.meals.take(5), key = { it.time }) { meal ->
                     MealRow(meal, onClick = {
                         editingMeal = meal
