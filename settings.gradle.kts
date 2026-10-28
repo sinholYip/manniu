@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "RankeHealth"
+rootProject.name = "manniu"
 include(":app")
