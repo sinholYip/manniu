@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 安全问题
+    url: https://github.com/sinholYip/manniu/security/advisories/new
+    about: 请勿用公开 issue 报告漏洞，走私密漏洞报告流程。
+  - name: 使用问题与讨论
+    url: https://github.com/sinholYip/manniu/discussions
+    about: 不确定是不是缺陷、想聊使用方式，请到讨论区。

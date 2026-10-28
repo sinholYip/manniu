@@ -1,0 +1,74 @@
+name: 缺陷报告
+description: 记录一个可以复现的问题
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈。请尽量把信息填完整，缺信息的问题通常很难定位。
+        如果是**安全问题**，请不要在这里提交，见 [SECURITY.md](../blob/main/SECURITY.md)。
+
+  - type: input
+    id: version
+    attributes:
+      label: 应用版本
+      description: 在「我」页面底部或安装包文件名里可以看到，例如 0.5.6
+      placeholder: 0.5.6
+    validations:
+      required: true
+
+  - type: input
+    id: device
+    attributes:
+      label: 设备与系统版本
+      placeholder: 小米 14 / Android 15
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      description: 从打开应用开始，按顺序写清楚点了什么
+      placeholder: |
+        1. 打开首页
+        2. 点击「记录体重」
+        3. 输入 70.5 后保存
+        4. …
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望结果
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际结果
+      description: 有报错信息或截图请一并附上
+    validations:
+      required: true
+
+  - type: dropdown
+    id: data-risk
+    attributes:
+      label: 是否涉及数据丢失或损坏
+      description: 涉及数据风险的问题会被优先处理
+      options:
+        - 不涉及
+        - 可能涉及（数据没丢，但状态异常）
+        - 涉及（记录丢失、无法打开、备份恢复失败）
+    validations:
+      required: true
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: 补充信息
+      description: 例如是否从备份恢复过、是否刚升级版本
+    validations:
+      required: false
