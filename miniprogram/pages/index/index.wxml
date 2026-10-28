@@ -1,0 +1,37 @@
+<view class="page">
+  <view class="hero-row">
+    <view>
+      <view class="eyebrow">{{dateText}}</view>
+      <view class="title">今天，稳稳推进</view>
+    </view>
+    <view class="mode">{{modeText}}</view>
+  </view>
+
+  <view class="card intake-card">
+    <view class="card-label">今日摄入</view>
+    <view class="calorie-line"><text class="calories">{{consumed}}</text><text class="unit"> / {{target}} kcal</text></view>
+    <view class="track"><view class="fill" style="width: {{progress}}%"></view></view>
+    <view class="macro-row">
+      <view class="macro"><text class="macro-name">碳水</text><text class="macro-value">{{carbs}} / {{targetCarbs}}g</text></view>
+      <view class="macro"><text class="macro-name">蛋白</text><text class="macro-value">{{protein}} / {{targetProtein}}g</text></view>
+      <view class="macro"><text class="macro-name">脂肪</text><text class="macro-value">{{fat}} / {{targetFat}}g</text></view>
+    </view>
+  </view>
+
+  <view class="quick-row">
+    <button class="primary-button quick" bindtap="goMeal">＋ 记录饮食</button>
+    <button class="secondary-button quick" bindtap="goWeight">＋ 记录体重</button>
+  </view>
+
+  <view class="section-row">
+    <text class="section-title">最近饮食</text>
+    <text class="weight">最新体重 {{latestWeight}} kg</text>
+  </view>
+  <view class="card meal-list">
+    <view wx:if="{{emptyMeals}}" class="empty">记下第一餐，才能看见今天的营养趋势</view>
+    <view wx:for="{{meals}}" wx:key="time" class="meal-row">
+      <view><view class="meal-name">{{item.name}}</view><view class="meal-period">{{item.period}}</view></view>
+      <view class="meal-kcal">{{item.kcal}} kcal</view>
+    </view>
+  </view>
+</view>

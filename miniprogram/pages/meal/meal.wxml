@@ -1,0 +1,26 @@
+<view class="page">
+  <view class="headline">记录饮食</view>
+  <view class="subhead">按三大营养素自动计算热量</view>
+  <view class="card form">
+    <text class="label">用餐时段</text>
+    <picker range="{{periods}}" range-key="label" value="{{periodIndex}}" bindchange="onPeriod">
+      <view class="picker">{{periods[periodIndex].label}} <text>⌄</text></view>
+    </picker>
+    <text class="label">食物名称</text>
+    <input class="field" value="{{name}}" bindinput="onName" placeholder="例如：鸡胸肉和米饭" placeholder-class="placeholder" />
+    <view class="nutrient-row">
+      <view class="nutrient"><text class="label">碳水 g</text><input class="field" type="digit" value="{{carbs}}" bindinput="onCarbs" placeholder="0" /></view>
+      <view class="nutrient"><text class="label">蛋白 g</text><input class="field" type="digit" value="{{protein}}" bindinput="onProtein" placeholder="0" /></view>
+      <view class="nutrient"><text class="label">脂肪 g</text><input class="field" type="digit" value="{{fat}}" bindinput="onFat" placeholder="0" /></view>
+    </view>
+    <view class="total"><text>自动计算</text><text class="lime total-value">{{calculated}} kcal</text></view>
+    <button class="primary-button" bindtap="save">记录 {{calculated}} kcal</button>
+  </view>
+
+  <view class="list-title">全部记录</view>
+  <view wx:if="{{empty}}" class="card empty">还没有饮食记录</view>
+  <view wx:for="{{meals}}" wx:key="time" class="card meal-card">
+    <view class="meal-main"><view><view class="meal-name">{{item.name}}</view><view class="meal-meta">{{item.date}} · {{item.period}}</view></view><view class="meal-kcal">{{item.kcal}} kcal</view></view>
+    <view class="meal-footer"><text>{{item.macros}}</text><text class="delete" data-time="{{item.time}}" bindtap="remove">删除</text></view>
+  </view>
+</view>

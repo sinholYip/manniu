@@ -1,0 +1,14 @@
+{
+  "description": "man牛微信小程序",
+  "miniprogramRoot": "miniprogram/",
+  "compileType": "miniprogram",
+  "setting": {
+    "useCompilerPlugins": ["typescript"],
+    "es6": true,
+    "minified": true,
+    "postcss": true,
+    "urlCheck": true
+  },
+  "appid": "touristappid",
+  "projectname": "manniu-miniprogram"
+}

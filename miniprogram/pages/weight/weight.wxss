@@ -1,0 +1,18 @@
+.headline { margin-top:12rpx; font-size:42rpx; font-weight:800; }
+.subhead { margin:8rpx 0 28rpx; color:#819389; font-size:24rpx; }
+.summary-row { display:flex; gap:16rpx; }
+.summary { flex:1; display:flex; min-height:154rpx; flex-direction:column; justify-content:space-between; }
+.big { font-size:56rpx; font-weight:800; }
+.unit { color:#819389; font-size:25rpx; }
+.delta { font-size:36rpx; font-weight:750; }
+.input-card { margin-top:18rpx; }
+.label { color:#9aaba2; font-size:24rpx; }
+.input-row { display:flex; align-items:center; gap:14rpx; margin-top:10rpx; }
+.kg-field { flex:1; margin:0; }
+.save { width:180rpx; }
+.list-title { margin:40rpx 0 16rpx; font-size:30rpx; font-weight:750; }
+.records { padding:0 28rpx; }
+.record { display:flex; min-height:96rpx; align-items:center; justify-content:space-between; border-bottom:1rpx solid #1d3027; font-size:24rpx; }
+.record:last-child { border-bottom:0; }
+.record-value { font-size:28rpx; font-weight:700; }
+.empty { color:#819389; text-align:center; }

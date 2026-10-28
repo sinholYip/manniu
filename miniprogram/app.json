@@ -1,0 +1,29 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/meal/meal",
+    "pages/weight/weight",
+    "pages/profile/profile"
+  ],
+  "window": {
+    "navigationBarTitleText": "man牛",
+    "navigationBarBackgroundColor": "#07130f",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#07130f",
+    "backgroundTextStyle": "dark"
+  },
+  "tabBar": {
+    "color": "#819389",
+    "selectedColor": "#b8ff38",
+    "backgroundColor": "#0b1813",
+    "borderStyle": "black",
+    "list": [
+      { "pagePath": "pages/index/index", "text": "首页" },
+      { "pagePath": "pages/meal/meal", "text": "饮食" },
+      { "pagePath": "pages/weight/weight", "text": "体重" },
+      { "pagePath": "pages/profile/profile", "text": "我的" }
+    ]
+  },
+  "sitemapLocation": "sitemap.json",
+  "style": "v2"
+}

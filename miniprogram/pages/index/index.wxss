@@ -1,0 +1,28 @@
+.hero-row,.section-row,.quick-row,.macro-row,.meal-row { display:flex; align-items:center; justify-content:space-between; }
+.hero-row { margin: 18rpx 0 34rpx; }
+.eyebrow { color:#8fa198; font-size:24rpx; }
+.title { margin-top:8rpx; font-size:42rpx; font-weight:800; }
+.mode { border:1rpx solid #b8ff38; border-radius:999rpx; padding:10rpx 20rpx; color:#b8ff38; font-size:24rpx; }
+.intake-card { padding:34rpx; }
+.card-label { color:#8fa198; font-size:25rpx; }
+.calorie-line { margin:14rpx 0 26rpx; }
+.calories { color:#b8ff38; font-size:72rpx; font-weight:800; }
+.unit { color:#8fa198; font-size:27rpx; }
+.track { height:14rpx; overflow:hidden; border-radius:20rpx; background:#20342b; }
+.fill { height:100%; border-radius:20rpx; background:linear-gradient(90deg,#79da2c,#cfff48); }
+.macro-row { margin-top:30rpx; gap:12rpx; }
+.macro { display:flex; flex:1; flex-direction:column; }
+.macro-name { color:#819389; font-size:22rpx; }
+.macro-value { margin-top:7rpx; font-size:24rpx; font-weight:650; }
+.quick-row { gap:18rpx; margin:24rpx 0 42rpx; }
+.quick { flex:1; }
+.section-row { margin-bottom:16rpx; }
+.section-title { font-size:30rpx; font-weight:750; }
+.weight { color:#819389; font-size:23rpx; }
+.meal-list { padding:8rpx 28rpx; }
+.meal-row { min-height:106rpx; border-bottom:1rpx solid #1d3027; }
+.meal-row:last-child { border-bottom:0; }
+.meal-name { font-size:28rpx; font-weight:650; }
+.meal-period { margin-top:6rpx; color:#819389; font-size:22rpx; }
+.meal-kcal { color:#b8ff38; font-size:27rpx; font-weight:700; }
+.empty { padding:54rpx 10rpx; color:#819389; text-align:center; font-size:25rpx; }

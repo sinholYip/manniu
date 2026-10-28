@@ -1,0 +1,17 @@
+<view class="page">
+  <view class="headline">体重趋势</view>
+  <view class="subhead">红涨绿待上涨，记录每一次变化</view>
+  <view class="summary-row">
+    <view class="card summary"><text class="muted">最新体重</text><view><text class="big lime">{{latest}}</text><text class="unit"> kg</text></view></view>
+    <view class="card summary"><text class="muted">较上次</text><view class="delta">{{change}}</view></view>
+  </view>
+  <view class="card input-card">
+    <text class="label">记录当前体重</text>
+    <view class="input-row"><input class="field kg-field" type="digit" value="{{kg}}" bindinput="onKg" placeholder="例如 82.5" /><button class="primary-button save" bindtap="save">保存</button></view>
+  </view>
+  <view class="list-title">历史记录</view>
+  <view wx:if="{{empty}}" class="card empty">还没有体重记录</view>
+  <view wx:else class="card records">
+    <view wx:for="{{records}}" wx:key="time" class="record"><text class="muted">{{item.date}}</text><text class="record-value">{{item.kg}} kg</text></view>
+  </view>
+</view>

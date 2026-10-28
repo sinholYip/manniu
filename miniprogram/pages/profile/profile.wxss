@@ -1,0 +1,13 @@
+.brand { display:flex; align-items:center; gap:22rpx; margin:18rpx 0 36rpx; }
+.logo { display:flex; width:92rpx; height:92rpx; align-items:center; justify-content:center; border-radius:26rpx; background:#b8ff38; color:#07130f; font-size:48rpx; font-weight:900; }
+.headline { font-size:40rpx; font-weight:800; }
+.subhead { margin-top:5rpx; color:#819389; font-size:24rpx; }
+.stats { display:flex; gap:16rpx; }
+.stat { flex:1; display:flex; flex-direction:column; gap:8rpx; }
+.stat-value { color:#b8ff38; font-size:46rpx; font-weight:800; }
+.section-title { margin:42rpx 0 16rpx; font-size:30rpx; font-weight:750; }
+.backup-title { font-size:30rpx; font-weight:750; }
+.backup-desc { margin:12rpx 0 28rpx; color:#819389; font-size:24rpx; line-height:1.7; }
+.second { margin-top:16rpx; }
+.last { margin-top:22rpx; color:#61756a; text-align:center; font-size:21rpx; }
+.notice { margin-top:24rpx; color:#71857a; font-size:22rpx; line-height:1.7; }

@@ -1,0 +1,4 @@
+{
+  "desc": "man牛页面索引规则",
+  "rules": [{ "action": "disallow", "page": "*" }]
+}

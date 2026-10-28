@@ -1,0 +1,16 @@
+<view class="page">
+  <view class="brand"><view class="logo">牛</view><view><view class="headline">man牛</view><view class="subhead">你的饮食与训练记录</view></view></view>
+  <view class="stats">
+    <view class="card stat"><text class="stat-value">{{weights}}</text><text class="muted">体重记录</text></view>
+    <view class="card stat"><text class="stat-value">{{meals}}</text><text class="muted">饮食记录</text></view>
+  </view>
+  <view class="section-title">保存中心</view>
+  <view class="card backup">
+    <view class="backup-title">完整数据备份</view>
+    <view class="backup-desc">兼容 Android 版 schemaVersion 1。恢复时合并记录，不重复添加已有体重和饮食。</view>
+    <button class="primary-button" bindtap="exportBackup">保存全部数据</button>
+    <button class="secondary-button second" bindtap="importBackup">恢复数据</button>
+    <view class="last">上次导出：{{lastExport}}</view>
+  </view>
+  <view class="notice">当前版本仅保存在本机微信数据中。卸载微信或清理小程序数据前，请先导出备份。</view>
+</view>
