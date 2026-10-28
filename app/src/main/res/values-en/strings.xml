@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  English (values-en). Mirrors values/strings.xml one-to-one.
+  Copy is kept short on purpose: `我的`/tab labels, chart legends and the
+  exercise value cells are narrow, so long phrasings would get clipped.
+-->
+<resources>
+
+    <!-- Brand / shared -->
+    <string name="app_name">ManNiu</string>
+    <string name="brand_suffix">Niu</string>
+    <string name="header_tagline">See your body trend, day by day</string>
+    <string name="nav_nutrition">Nutrition</string>
+    <string name="nav_training">Training</string>
+    <string name="nav_profile">Profile</string>
+    <string name="action_close">Close</string>
+    <string name="action_add">Add</string>
+    <string name="action_search">Search</string>
+    <string name="action_delete">Delete</string>
+
+    <!-- Dashboard -->
+    <string name="log_food">Log Food</string>
+    <string name="recent_meals">Recent meals</string>
+    <string name="dash_today_intake">Today\'s Intake</string>
+    <string name="dash_goal_remaining" formatted="false">Goal %,.0f  ·  Left %,.0f</string>
+    <string name="macro_carbs">Carbs</string>
+    <string name="macro_protein">Protein</string>
+    <string name="macro_fat">Fat</string>
+    <string name="macro_protein_short">Protein</string>
+    <string name="macro_formula">Carbs×4 + Protein×4 + Fat×9</string>
+    <string name="dash_weight_trend">Weight Trend</string>
+    <string name="dash_demo">Demo</string>
+    <string name="dash_range_note">Red up · green down</string>
+    <string name="dash_open_close">Open to close today</string>
+    <string name="legend_up">Up</string>
+    <string name="legend_down">Down</string>
+    <string name="dash_bars_note">Bars = daily intake</string>
+    <string name="dash_daily_kcal">Daily kcal</string>
+    <string name="dash_weight_value" formatted="false">Weight %.1f kg</string>
+    <string name="dash_intake_value" formatted="false">Intake %.0f kcal</string>
+    <string name="dash_meal_count" formatted="false">%d-Meal Progress</string>
+    <string name="dash_training_pre">Training day includes a pre-workout meal</string>
+    <string name="dash_rest_no_pre">Rest day has no pre-workout meal</string>
+    <string name="dash_edit_plan_cd">Edit nutrition plan</string>
+    <string name="meal_macros_energy" formatted="false">C %.0fg  P %.0fg  F %.0fg</string>
+    <string name="meal_macros_full" formatted="false">Carbs %.1fg  Protein %.1fg  Fat %.1fg</string>
+    <string name="tip_first_meal">Log your first meal to start seeing today\'s trend</string>
+    <string name="tip_over_target">Over target today — go light and keep moving for the rest of the day</string>
+    <string name="tip_low_protein">Protein is behind today — pick fish, eggs or lean meat next</string>
+    <string name="tip_walk">A 20-minute walk after dinner helps steady your evening</string>
+    <string name="dash_today_tip">Tip for today</string>
+
+    <!-- Trend ranges -->
+    <string name="range_14">14D</string>
+    <string name="range_30">30D</string>
+    <string name="range_60">60D</string>
+    <string name="range_half_year">6M</string>
+    <string name="range_all">All</string>
+
+    <!-- Weight dialog -->
+    <string name="weight_dialog_title">Log Weight</string>
+    <string name="weight_dialog_sub">Today\'s weight</string>
+    <string name="weight_range_hint">20–400 kg, one decimal place</string>
+    <string name="weight_recent_title">Recent entries</string>
+    <string name="weight_recent_sub">Helps you check this entry</string>
+    <string name="weight_save">Save Weight</string>
+
+    <!-- Nutrition plan -->
+    <string name="plan_title">Daily Nutrition</string>
+    <string name="plan_sub">Training and rest days set separately</string>
+    <string name="plan_tab_targets">Daily targets</string>
+    <string name="plan_tab_split">Meal split</string>
+    <string name="plan_targets_hint">Enter carb, protein and fat targets; calories update automatically.</string>
+    <string name="plan_split_hint">Meals you fill in are locked; the remainder is redistributed.</string>
+    <string name="plan_training_day_pre">Training · with pre-workout</string>
+    <string name="plan_rest_day_no_pre">Rest · no pre-workout</string>
+    <string name="plan_training_split_invalid">Training split needs valid grams that stay balanced</string>
+    <string name="plan_rest_split_invalid">Rest split needs valid grams that stay balanced</string>
+    <string name="plan_save">Save Plan</string>
+    <string name="plan_pick_days">Training days each week</string>
+
+    <!-- Meal dialog -->
+    <string name="meal_dialog_add">Log Meal</string>
+    <string name="meal_dialog_edit">Edit Meal</string>
+    <string name="meal_dialog_add_sub">Pick a food, adjust the portion, calories follow</string>
+    <string name="meal_dialog_edit_sub">Edits update calories and nutrition totals</string>
+    <string name="meal_section_period">Meal time</string>
+    <string name="meal_section_period_sub">Chosen from the current time</string>
+    <string name="meal_section_quick">Quick picks</string>
+    <string name="meal_section_quick_sub">Custom and common foods</string>
+    <string name="meal_section_search">Search foods</string>
+    <string name="meal_section_search_sub">Searches local references and Open Food Facts</string>
+    <string name="meal_search_hint">e.g. rice, milk</string>
+    <string name="meal_search_none">No results — you can also type it in below</string>
+    <string name="meal_search_found" formatted="false">%d results</string>
+    <string name="meal_section_portion">Portion &amp; Nutrition</string>
+    <string name="meal_portion_selected" formatted="false">%s selected — portion changes recalculate</string>
+    <string name="meal_portion_manual">Or enter everything manually</string>
+    <string name="meal_portion_label">Portion eaten (g)</string>
+    <string name="meal_food_name">Food name</string>
+    <string name="meal_carb_g">Carbs (g)</string>
+    <string name="meal_protein_g">Protein (g)</string>
+    <string name="meal_fat_g">Fat (g)</string>
+    <string name="meal_auto_kcal">Calculated calories</string>
+    <string name="meal_preset_saved">Saved as a per-100 g preset</string>
+    <string name="meal_save_preset">Save as Common Food</string>
+    <string name="meal_save_new" formatted="false">Log %.0f kcal</string>
+    <string name="meal_save_edit" formatted="false">Save %.0f kcal</string>
+    <string name="meal_remove_cd" formatted="false">Remove %s from quick picks</string>
+    <string name="food_row_macros" formatted="false">%s · C %.1f / P %.1f / F %.1f g</string>
+
+    <!-- Training -->
+    <string name="train_title">Training Plan</string>
+    <string name="train_sub">Know what you train at a glance</string>
+    <string name="train_today_title">Today\'s Training</string>
+    <string name="train_rest_hero">Rest Well</string>
+    <string name="train_diet_training">Diet target · training day</string>
+    <string name="train_diet_rest">Diet target · rest day</string>
+    <string name="train_unit_lifts">lifts</string>
+    <string name="train_unit_minutes">min</string>
+    <string name="train_about">~</string>
+    <string name="train_week_n" formatted="false">Week %d</string>
+    <string name="train_of_weeks" formatted="false">/ %d wk</string>
+    <string name="train_collapse_settings">Hide settings</string>
+    <string name="train_cycle_settings">Cycle settings</string>
+    <string name="train_cycle_hint">Set cycle length and deload week; deload cuts sets to about 60%</string>
+    <string name="train_cycle_weeks">Cycle weeks</string>
+    <string name="train_deload_week">Deload week</string>
+    <string name="train_week_unit">wk</string>
+    <string name="train_week_prefix">W</string>
+    <string name="train_cycle_invalid">Cycle is 1–12 weeks and deload must fall inside it</string>
+    <string name="train_pick_week">Week to edit</string>
+    <string name="train_prev_week">‹ Prev</string>
+    <string name="train_next_week">Next ›</string>
+    <string name="train_day_on">T</string>
+    <string name="train_day_off">R</string>
+    <string name="train_exercise_plan">Exercises</string>
+    <string name="train_add_exercise">Add exercise</string>
+    <string name="train_done_undo">Done · tap to undo</string>
+    <string name="train_complete">Complete workout</string>
+    <string name="train_rest_title">Recovery day</string>
+    <string name="train_rest_sub">No exercises can be added on a rest day</string>
+    <string name="train_stats">Training Stats</string>
+    <string name="train_stat_sessions">Workouts</string>
+    <string name="train_stat_cycles">Cycles</string>
+    <string name="train_stat_session_unit"></string>
+    <string name="train_stat_cycle_unit"></string>
+    <string name="train_volume">Volume by Region</string>
+    <string name="train_volume_empty">Finish a workout and effective sets build up here by region</string>
+    <string name="train_sets_n" formatted="false">%d sets</string>
+    <string name="train_volume_note">Compound lifts count toward every region they involve</string>
+    <string name="train_edit_cd">Edit exercise</string>
+    <string name="train_sets_reps" formatted="false">%d sets × %s reps</string>
+    <string name="train_pr">Lift PRs</string>
+    <string name="train_pr_add">Log PR</string>
+    <string name="train_pr_empty">Pick a lift and log your best weight and reps</string>
+    <string name="train_pr_dialog">Log a Lift PR</string>
+    <string name="train_search_exercise">Search lifts</string>
+    <string name="train_exercise_name">Lift name</string>
+    <string name="train_weight">Weight</string>
+    <string name="train_reps">Reps</string>
+    <string name="train_pr_note">History is kept per lift; the highest estimated 1RM is shown</string>
+    <string name="train_pr_save">Save PR</string>
+    <string name="train_search_hint">Search planned or common lifts</string>
+    <string name="train_recommended">Recommended</string>
+    <string name="train_results">Results</string>
+    <string name="train_no_result">No lifts found — type the name directly</string>
+    <string name="train_sets">Sets</string>
+    <string name="train_weight_intensity">Weight / intensity</string>
+    <string name="train_weight_hint">e.g. 80kg or 85%</string>
+    <string name="train_save_exercise">Save Exercise</string>
+
+    <!-- Profile -->
+    <string name="profile_title">Profile</string>
+    <string name="profile_sub">Adjust your body data; metrics and calories follow</string>
+    <string name="profile_body">Body Data</string>
+    <string name="profile_height">Height (cm)</string>
+    <string name="profile_weight">Weight (kg)</string>
+    <string name="profile_age">Age</string>
+    <string name="profile_bmr">BMR</string>
+    <string name="profile_kcal_per_day">kcal / day</string>
+    <string name="profile_reference_kcal">Reference Calories</string>
+    <string name="profile_sedentary">Sedentary total</string>
+    <string name="profile_bmr_div">BMR ÷ 0.7</string>
+    <string name="profile_training_balance">Training day balance</string>
+    <string name="profile_incl_lifting" formatted="false">incl. %.0f kcal lifting</string>
+    <string name="profile_rest_balance">Rest day balance</string>
+    <string name="profile_no_extra">no extra training</string>
+    <string name="profile_training_intake">Training day intake</string>
+    <string name="profile_balance_times" formatted="false">balance × %.0f%%</string>
+    <string name="profile_rest_intake">Rest day intake</string>
+    <string name="profile_bmr_note">BMR uses the Mifflin-St Jeor equation. Reference only; it never changes your plan.</string>
+    <string name="profile_diet_ref">Diet Reference</string>
+    <string name="profile_per_kg">Per-kg reference</string>
+    <string name="profile_training_carb">Training carbs</string>
+    <string name="profile_rest_carb">Rest carbs</string>
+    <string name="profile_protein">Protein</string>
+    <string name="profile_macro_note">Tracks your weight live. Reference only; your saved plan is unchanged.</string>
+    <string name="profile_carbs_col">Carbs</string>
+    <string name="profile_training_row">Training</string>
+    <string name="profile_rest_row">Rest</string>
+    <string name="profile_type_col">Type</string>
+
+    <!-- Save center -->
+    <string name="save_center">Save Center</string>
+    <string name="save_center_sub">Full backup with body settings and every record</string>
+    <string name="save_center_sub_short">Backs up body settings and all records</string>
+    <string name="save_all_data">Save All</string>
+    <string name="restore_data">Restore</string>
+
+    <!-- Language -->
+    <string name="profile_language">Language / 语言</string>
+    <string name="profile_language_hint">Applies immediately; records and backups are unchanged</string>
+    <string name="lang_system">System</string>
+    <string name="lang_zh">简体中文</string>
+    <string name="lang_en">English</string>
+
+    <!-- Enums: meals / day mode / sex / BMI / region -->
+    <string name="meal_breakfast">Breakfast</string>
+    <string name="meal_lunch">Lunch</string>
+    <string name="meal_pre_workout">Pre-workout</string>
+    <string name="meal_dinner">Dinner</string>
+    <string name="meal_night_snack">Night snack</string>
+    <string name="day_training">Training</string>
+    <string name="day_rest">Rest</string>
+    <string name="sex_male">Male</string>
+    <string name="sex_female">Female</string>
+    <string name="bmi_underweight">Underweight</string>
+    <string name="bmi_normal">Normal</string>
+    <string name="bmi_overweight">Overweight</string>
+    <string name="bmi_obese">Obese</string>
+    <string name="region_chest">Chest</string>
+    <string name="region_back">Back</string>
+    <string name="region_shoulders">Shoulders</string>
+    <string name="region_biceps">Biceps</string>
+    <string name="region_triceps">Triceps</string>
+    <string name="region_core">Core</string>
+    <string name="region_glutes">Glutes</string>
+    <string name="region_quads">Quads</string>
+    <string name="region_hamstrings">Hamstrings</string>
+    <string name="region_calves">Calves</string>
+    <string name="region_lower_back">Lower back</string>
+    <string name="region_erector_spinae">Erectors</string>
+    <string name="focus_preparation">Getting Ready</string>
+    <string name="focus_leg_power">Leg Strength</string>
+    <string name="focus_push">Push Day</string>
+    <string name="focus_pull">Pull Day</string>
+    <string name="focus_posterior_chain">Posterior Chain</string>
+    <string name="focus_region" formatted="false">%s Day</string>
+
+    <!-- Feedback -->
+    <string name="toast_data_saved">Data saved. Future saves overwrite this file.</string>
+    <string name="toast_save_failed">Save failed</string>
+    <string name="toast_data_restored">Data restored</string>
+    <string name="toast_invalid_file">Invalid data file</string>
+    <string name="toast_overwritten">Original data file overwritten</string>
+    <string name="toast_file_unavailable">Original file unavailable. Choose a new location.</string>
+    <string name="backup_file_name">manniu-health-data.json</string>
+</resources>

@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  默认语言（简体中文）。
+  带 % 的条目统一标记 formatted="false"，由 Kotlin 侧调用 String.format，
+  这样中英文可以各自决定占位符顺序而不必担心位置参数。
+-->
+<resources>
+
+    <!-- 通用 / 品牌 -->
+    <string name="app_name">man牛</string>
+    <string name="brand_suffix">牛</string>
+    <string name="header_tagline">看见每一天的身体趋势</string>
+    <string name="nav_nutrition">饮食计划</string>
+    <string name="nav_training">训练计划</string>
+    <string name="nav_profile">我</string>
+    <string name="action_close">关闭</string>
+    <string name="action_add">添加</string>
+    <string name="action_search">搜索</string>
+    <string name="action_delete">删除</string>
+
+    <!-- 首页 -->
+    <string name="log_food">记录饮食</string>
+    <string name="recent_meals">最近饮食</string>
+    <string name="dash_today_intake">今日摄入</string>
+    <string name="dash_goal_remaining" formatted="false">目标 %,.0f  ·  剩余 %,.0f</string>
+    <string name="macro_carbs">碳水</string>
+    <string name="macro_protein">蛋白质</string>
+    <string name="macro_fat">脂肪</string>
+    <string name="macro_protein_short">蛋白</string>
+    <string name="macro_formula">碳水×4 + 蛋白质×4 + 脂肪×9</string>
+    <string name="dash_weight_trend">体重趋势</string>
+    <string name="dash_demo">演示</string>
+    <string name="dash_range_note">红涨绿待上涨</string>
+    <string name="dash_open_close">当日开盘至收盘</string>
+    <string name="legend_up">上涨</string>
+    <string name="legend_down">待上涨</string>
+    <string name="dash_bars_note">柱高 = 每日摄入</string>
+    <string name="dash_daily_kcal">每日热量</string>
+    <string name="dash_weight_value" formatted="false">体重 %.1f kg</string>
+    <string name="dash_intake_value" formatted="false">热量 %.0f kcal</string>
+    <string name="dash_meal_count" formatted="false">%d餐进度</string>
+    <string name="dash_training_pre">训练日包含练前餐</string>
+    <string name="dash_rest_no_pre">休息日不安排练前餐</string>
+    <string name="dash_edit_plan_cd">设置营养计划</string>
+    <string name="meal_macros_energy" formatted="false">碳 %.0fg  蛋 %.0fg  脂 %.0fg</string>
+    <string name="meal_macros_full" formatted="false">碳水 %.1fg  蛋白 %.1fg  脂肪 %.1fg</string>
+    <string name="tip_first_meal">记下第一餐，才能看见今天的营养趋势</string>
+    <string name="tip_over_target">今日已超出目标，剩余时间选择清淡食物并适量活动</string>
+    <string name="tip_low_protein">今日蛋白质进度偏低，下一餐可优先选鱼、蛋或瘦肉</string>
+    <string name="tip_walk">晚餐后散步 20 分钟，有助于稳定餐后状态</string>
+    <string name="dash_today_tip">今日提示</string>
+
+    <!-- 时间范围 -->
+    <string name="range_14">14天</string>
+    <string name="range_30">30天</string>
+    <string name="range_60">60天</string>
+    <string name="range_half_year">半年</string>
+    <string name="range_all">至今</string>
+
+    <!-- 记录体重 -->
+    <string name="weight_dialog_title">记录体重</string>
+    <string name="weight_dialog_sub">今天的体重</string>
+    <string name="weight_range_hint">支持 20–400 kg，保留一位小数即可</string>
+    <string name="weight_recent_title">最近记录</string>
+    <string name="weight_recent_sub">用于确认本次输入是否合理</string>
+    <string name="weight_save">保存体重</string>
+
+    <!-- 营养计划 -->
+    <string name="plan_title">每日营养计划</string>
+    <string name="plan_sub">训练日与休息日独立设置</string>
+    <string name="plan_tab_targets">每日目标</string>
+    <string name="plan_tab_split">餐次分配</string>
+    <string name="plan_targets_hint">输入碳蛋脂目标，热量会自动计算。</string>
+    <string name="plan_split_hint">已手动填写的餐次会锁定，剩余克数继续向后分配。</string>
+    <string name="plan_training_day_pre">训练日 · 含练前餐</string>
+    <string name="plan_rest_day_no_pre">休息日 · 无练前餐</string>
+    <string name="plan_training_split_invalid">训练日分配需为有效克数并保持自动平衡</string>
+    <string name="plan_rest_split_invalid">休息日分配需为有效克数并保持自动平衡</string>
+    <string name="plan_save">保存计划</string>
+    <string name="plan_pick_days">选择每周训练日</string>
+
+    <!-- 记录饮食 -->
+    <string name="meal_dialog_add">记录饮食</string>
+    <string name="meal_dialog_edit">修改饮食</string>
+    <string name="meal_dialog_add_sub">选食物、调份量，热量会自动计算</string>
+    <string name="meal_dialog_edit_sub">修改后热量与营养汇总会同步更新</string>
+    <string name="meal_section_period">用餐时段</string>
+    <string name="meal_section_period_sub">已根据当前时间自动选择</string>
+    <string name="meal_section_quick">快速选择</string>
+    <string name="meal_section_quick_sub">自定义与常用食物</string>
+    <string name="meal_section_search">搜索食物</string>
+    <string name="meal_section_search_sub">同时搜索本地参考值与 Open Food Facts</string>
+    <string name="meal_search_hint">例如：米饭、牛奶</string>
+    <string name="meal_search_none">没有找到，也可以直接在下方手动填写</string>
+    <string name="meal_search_found" formatted="false">找到 %d 个结果</string>
+    <string name="meal_section_portion">份量与营养</string>
+    <string name="meal_portion_selected" formatted="false">已选 %s，改份量会自动换算</string>
+    <string name="meal_portion_manual">也可以直接手动录入</string>
+    <string name="meal_portion_label">实际食用量（克）</string>
+    <string name="meal_food_name">食物名称</string>
+    <string name="meal_carb_g">碳水 (g)</string>
+    <string name="meal_protein_g">蛋白质 (g)</string>
+    <string name="meal_fat_g">脂肪 (g)</string>
+    <string name="meal_auto_kcal">自动计算热量</string>
+    <string name="meal_preset_saved">已保存为每 100 克食物预设</string>
+    <string name="meal_save_preset">保存为常用食物</string>
+    <string name="meal_save_new" formatted="false">记录 %.0f kcal</string>
+    <string name="meal_save_edit" formatted="false">保存修改 %.0f kcal</string>
+    <string name="meal_remove_cd" formatted="false">从快速选择移除%s</string>
+    <string name="food_row_macros" formatted="false">%s · 碳 %.1f / 蛋 %.1f / 脂 %.1fg</string>
+
+    <!-- 训练 -->
+    <string name="train_title">训练计划</string>
+    <string name="train_sub">今天练什么，一眼就知道</string>
+    <string name="train_today_title">今日训练</string>
+    <string name="train_rest_hero">好好休息</string>
+    <string name="train_diet_training">饮食目标 · 训练日</string>
+    <string name="train_diet_rest">饮食目标 · 休息日</string>
+    <string name="train_unit_lifts">动作</string>
+    <string name="train_unit_minutes">分钟</string>
+    <string name="train_about">约</string>
+    <string name="train_week_n" formatted="false">第 %d 周</string>
+    <string name="train_of_weeks" formatted="false">/ %d 周</string>
+    <string name="train_collapse_settings">收起设置</string>
+    <string name="train_cycle_settings">周期设置</string>
+    <string name="train_cycle_hint">设置周期长度与减载周；减载周动作组数降至约 60%</string>
+    <string name="train_cycle_weeks">周期周数</string>
+    <string name="train_deload_week">减载周</string>
+    <string name="train_week_unit">周</string>
+    <string name="train_week_prefix">第</string>
+    <string name="train_cycle_invalid">周期为 1–12 周，减载周需位于周期内</string>
+    <string name="train_pick_week">选择要编辑的周</string>
+    <string name="train_prev_week">‹ 上周</string>
+    <string name="train_next_week">下周 ›</string>
+    <string name="train_day_on">练</string>
+    <string name="train_day_off">休</string>
+    <string name="train_exercise_plan">动作安排</string>
+    <string name="train_add_exercise">添加动作</string>
+    <string name="train_done_undo">已完成 · 点击撤销</string>
+    <string name="train_complete">完成训练</string>
+    <string name="train_rest_title">今天安排恢复</string>
+    <string name="train_rest_sub">休息日不可添加训练动作</string>
+    <string name="train_stats">训练统计</string>
+    <string name="train_stat_sessions">完成训练</string>
+    <string name="train_stat_cycles">完成周期</string>
+    <string name="train_stat_session_unit">次</string>
+    <string name="train_stat_cycle_unit">周</string>
+    <string name="train_volume">部位容量</string>
+    <string name="train_volume_empty">完成一次训练后，这里会按部位累计有效组数</string>
+    <string name="train_sets_n" formatted="false">%d 组</string>
+    <string name="train_volume_note">复合动作会计入所有相关部位</string>
+    <string name="train_edit_cd">编辑动作</string>
+    <string name="train_sets_reps" formatted="false">%d 组 × %s 次</string>
+    <string name="train_pr">动作 PR</string>
+    <string name="train_pr_add">记录 PR</string>
+    <string name="train_pr_empty">选择动作，记录你的重量与次数纪录</string>
+    <string name="train_pr_dialog">记录动作 PR</string>
+    <string name="train_search_exercise">搜索动作</string>
+    <string name="train_exercise_name">动作名称</string>
+    <string name="train_weight">重量</string>
+    <string name="train_reps">次数</string>
+    <string name="train_pr_note">同一动作会保留历史记录，并展示估算强度最高的一次</string>
+    <string name="train_pr_save">保存 PR</string>
+    <string name="train_search_hint">搜索计划内动作或常用动作</string>
+    <string name="train_recommended">推荐动作</string>
+    <string name="train_results">搜索结果</string>
+    <string name="train_no_result">没有找到动作，可直接输入动作名称</string>
+    <string name="train_sets">组数</string>
+    <string name="train_weight_intensity">重量 / 强度</string>
+    <string name="train_weight_hint">例如 80kg 或 85%</string>
+    <string name="train_save_exercise">保存动作</string>
+
+    <!-- 我的 -->
+    <string name="profile_title">我</string>
+    <string name="profile_sub">调整身体数据，参考指标与热量会自动更新</string>
+    <string name="profile_body">身体数据</string>
+    <string name="profile_height">身高 (cm)</string>
+    <string name="profile_weight">体重 (kg)</string>
+    <string name="profile_age">年龄</string>
+    <string name="profile_bmr">基础代谢</string>
+    <string name="profile_kcal_per_day">kcal / 天</string>
+    <string name="profile_reference_kcal">参考热量</string>
+    <string name="profile_sedentary">无运动总消耗</string>
+    <string name="profile_bmr_div">基础代谢 ÷ 0.7</string>
+    <string name="profile_training_balance">训练日平衡热量</string>
+    <string name="profile_incl_lifting" formatted="false">含力训 %.0f kcal</string>
+    <string name="profile_rest_balance">休息日平衡热量</string>
+    <string name="profile_no_extra">无额外训练</string>
+    <string name="profile_training_intake">训练日应吃</string>
+    <string name="profile_balance_times" formatted="false">平衡热量 × %.0f%%</string>
+    <string name="profile_rest_intake">休息日应吃</string>
+    <string name="profile_bmr_note">基础代谢采用 Mifflin-St Jeor 方程，仅供参考，不影响首页计划。</string>
+    <string name="profile_diet_ref">饮食参考</string>
+    <string name="profile_per_kg">每公斤参考量</string>
+    <string name="profile_training_carb">力训碳水</string>
+    <string name="profile_rest_carb">休息碳水</string>
+    <string name="profile_protein">蛋白质</string>
+    <string name="profile_macro_note">以上结果随体重实时变化，仅供参考，不会修改首页已有计划。</string>
+    <string name="profile_carbs_col">碳水</string>
+    <string name="profile_training_row">力训日</string>
+    <string name="profile_rest_row">休息日</string>
+    <string name="profile_type_col">类型</string>
+
+    <!-- 保存中心 -->
+    <string name="save_center">保存中心</string>
+    <string name="save_center_sub">完整备份包含当前身体设置与全部记录</string>
+    <string name="save_center_sub_short">完整备份身体设置与全部记录</string>
+    <string name="save_all_data">保存全部数据</string>
+    <string name="restore_data">恢复数据</string>
+
+    <!-- 语言 -->
+    <string name="profile_language">语言 / Language</string>
+    <string name="profile_language_hint">切换后立即生效，已有记录与备份格式不受影响</string>
+    <string name="lang_system">跟随系统</string>
+    <string name="lang_zh">简体中文</string>
+    <string name="lang_en">English</string>
+
+    <!-- 枚举：餐次 / 日类型 / 性别 / BMI / 部位 -->
+    <string name="meal_breakfast">早餐</string>
+    <string name="meal_lunch">午餐</string>
+    <string name="meal_pre_workout">练前餐</string>
+    <string name="meal_dinner">晚餐</string>
+    <string name="meal_night_snack">宵夜</string>
+    <string name="day_training">训练日</string>
+    <string name="day_rest">休息日</string>
+    <string name="sex_male">男</string>
+    <string name="sex_female">女</string>
+    <string name="bmi_underweight">偏瘦</string>
+    <string name="bmi_normal">正常</string>
+    <string name="bmi_overweight">超重</string>
+    <string name="bmi_obese">肥胖</string>
+    <string name="region_chest">胸部</string>
+    <string name="region_back">背部</string>
+    <string name="region_shoulders">肩部</string>
+    <string name="region_biceps">肱二头肌</string>
+    <string name="region_triceps">肱三头肌</string>
+    <string name="region_core">腹部</string>
+    <string name="region_glutes">臀部</string>
+    <string name="region_quads">股四头肌</string>
+    <string name="region_hamstrings">腘绳肌</string>
+    <string name="region_calves">小腿</string>
+    <string name="region_lower_back">下背</string>
+    <string name="region_erector_spinae">竖脊肌</string>
+    <string name="focus_preparation">准备训练</string>
+    <string name="focus_leg_power">腿部力量</string>
+    <string name="focus_push">胸肩推力</string>
+    <string name="focus_pull">背部拉力</string>
+    <string name="focus_posterior_chain">后链力量</string>
+    <string name="focus_region" formatted="false">%s训练</string>
+
+    <!-- 提示与反馈 -->
+    <string name="toast_data_saved">数据已保存，之后将直接覆盖此文件</string>
+    <string name="toast_save_failed">保存失败</string>
+    <string name="toast_data_restored">数据已恢复</string>
+    <string name="toast_invalid_file">数据文件无效</string>
+    <string name="toast_overwritten">已覆盖原数据文件</string>
+    <string name="toast_file_unavailable">原文件不可用，请重新选择保存位置</string>
+    <string name="backup_file_name">man牛健康数据.json</string>
+</resources>
